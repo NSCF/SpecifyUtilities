@@ -1,0 +1,15 @@
+{
+  "name": "copyspecifyqueries",
+  "version": "1.0.0",
+  "description": "Copying user queries from one user to another",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ian Engelbrecht",
+  "license": "ISC",
+  "dependencies": {
+    "es6-promisify": "^6.0.1",
+    "mysql": "github:mysqljs/mysql"
+  }
+}
