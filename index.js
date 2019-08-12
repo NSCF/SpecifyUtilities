@@ -11,37 +11,13 @@ var conn = mysql.createConnection({
 
 var sourceUser = 'ian'; //the user name
 var targetUsers = [
-  'bronwynne',
-  'mahlatse',
-  'beth',
-  'riana',
-  'thando ',
-  'grace',
-  'mariette',
-  'chantelle',
-  'werner1',
-  'ian1',
-  'vivienne',
-  'robin ',
-  'petro',
-  'simangele',
-  'pietie',
-  'joel',
-  'ezekia',
-  'gert',
-  'mike',
-  'maggie',
-  'deon',
-  'morné',
-  'kerstin',
-  'andrea',
-  'teresa',
-  'albert',
-  'lauretta',
-  'captain',
-  'peter1',
-  'caitlin',
-  'adriaan'
+  'jan',
+  'precious',
+  'christiaan',
+  'trudie',
+  'gimo',
+  'heidi',
+  'beryl'
 ];
 
 var copyQueries = [];
