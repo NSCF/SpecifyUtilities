@@ -10,6 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "es6-promisify": "^6.0.1",
-    "mysql": "github:mysqljs/mysql"
+    "mysql": "github:mysqljs/mysql",
+    "mysql2": "^1.7.0",
+    "sequelize": "^4.37.10",
+    "typy": "^3.3.0"
   }
 }
