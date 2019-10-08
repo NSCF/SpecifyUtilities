@@ -213,7 +213,9 @@ module.exports = function(sequelize, DataTypes) {
 
   Preparation.associate = function(models) {
     models.Preparation.belongsTo(models.PrepType, {as: 'type', foreignKey: 'prepTypeId'})
+    models.Preparation.hasMany(models.PreparationAttachment, {as: 'attachments', foreignKey:'preparationId'})
   }
 
   return Preparation
+  
 };

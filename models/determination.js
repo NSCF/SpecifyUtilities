@@ -194,6 +194,7 @@ module.exports = function(sequelize, DataTypes) {
 
   Determination.associate = function(models){
     models.Determination.belongsTo(models.Taxon, {as: 'dettaxon', foreignKey: 'taxonId'})
+    models.Determination.belongsTo(models.Agent, {as: 'determiner', foreignKey: 'determinerId'})
   }
 
   return Determination

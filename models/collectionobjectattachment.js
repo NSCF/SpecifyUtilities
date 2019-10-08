@@ -1,7 +1,7 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('collectionobjectattachment', {
+  var CollectionObjectAttachment = sequelize.define('CollectionObjectAttachment', {
     collectionObjectAttachmentId: {
       type: DataTypes.INTEGER(11),
       allowNull: false,
@@ -78,4 +78,10 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     tableName: 'collectionobjectattachment'
   });
+
+  CollectionObjectAttachment.associate = function(models) {
+    models.CollectionObjectAttachment.belongsTo(models.Attachment, {as: 'file', foreignKey: 'attachmentId'})
+  }
+
+  return CollectionObjectAttachment
 };

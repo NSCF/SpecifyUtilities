@@ -38,6 +38,14 @@
       "program": "${workspaceFolder}\\getDWC.js",
       "cwd": "${workspaceRoot}"
       
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "testTransformHelpers",
+      "program": "${workspaceFolder}\\testTransformHelpers.js",
+      "cwd": "${workspaceRoot}"
+      
     }
   ]
 }

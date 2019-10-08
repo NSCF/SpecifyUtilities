@@ -308,7 +308,8 @@ module.exports = function(sequelize, DataTypes) {
     models.CollectionObject.belongsTo(models.CollectingEvent, {as: 'collectingEvent', foreignKey: 'CollectingEventID', targetKey: 'collectingEventId'})
     models.CollectionObject.belongsTo(models.Collection, {as: 'collection', foreignKey: 'CollectionID'})
     models.CollectionObject.hasMany(models.Determination, {as: 'determinations', foreignKey: 'collectionObjectId'})
-    models.CollectionObject.hasMany(models.Preparation), {as: 'preparations', foreignKey: 'collectionObjectId'}
+    models.CollectionObject.hasMany(models.Preparation, {as: 'preparations', foreignKey: 'collectionObjectId'})
+    models.CollectionObject.hasMany(models.CollectionObjectAttachment, {as: 'attachments', foreignKey: 'collectionObjectId'})
   }
 
   return CollectionObject

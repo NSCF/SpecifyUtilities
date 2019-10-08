@@ -1,7 +1,7 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('preparationattachment', {
+  var PreparationAttachment = sequelize.define('PreparationAttachment', {
     preparationAttachmentId: {
       type: DataTypes.INTEGER(11),
       allowNull: false,
@@ -78,4 +78,11 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     tableName: 'preparationattachment'
   });
+
+  PreparationAttachment.associate = function(models){
+    models.PreparationAttachment.belongsTo(models.Attachment, { as: 'file', foreignKey: 'attachmentId' }
+    })
+  }
+
+  return PreparationAttachment
 };

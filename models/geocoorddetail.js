@@ -173,6 +173,10 @@ module.exports = function(sequelize, DataTypes) {
     tableName: 'geocoorddetail'
   });
 
+  GeoCoordDetail.associate = function(models){
+    models.GeoCoordDetail.belongsTo(models.Agent, {as: 'geoRefAgent', foreignKey: 'agentId'})
+  }
+
   return GeoCoordDetail
 
 };
