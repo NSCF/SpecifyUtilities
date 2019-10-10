@@ -21,7 +21,6 @@
       "name": "test.js",
       "program": "${workspaceFolder}\\test.js",
       "cwd": "${workspaceRoot}"
-      
     },
     {
       "type": "node",
@@ -29,7 +28,6 @@
       "name": "testconns",
       "program": "${workspaceFolder}\\connstest.js",
       "cwd": "${workspaceRoot}"
-      
     },
     {
       "type": "node",
@@ -37,7 +35,6 @@
       "name": "testDWC",
       "program": "${workspaceFolder}\\getDWC.js",
       "cwd": "${workspaceRoot}"
-      
     },
     {
       "type": "node",
@@ -45,7 +42,13 @@
       "name": "testTransformHelpers",
       "program": "${workspaceFolder}\\testTransformHelpers.js",
       "cwd": "${workspaceRoot}"
-      
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "testHierarchies",
+      "program": "${workspaceFolder}\\scratchpad\\taxonhierarchy.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }

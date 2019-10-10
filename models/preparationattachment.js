@@ -80,8 +80,7 @@ module.exports = function(sequelize, DataTypes) {
   });
 
   PreparationAttachment.associate = function(models){
-    models.PreparationAttachment.belongsTo(models.Attachment, { as: 'file', foreignKey: 'attachmentId' }
-    })
+    models.PreparationAttachment.belongsTo(models.Attachment, { as: 'file', foreignKey: 'attachmentId' })
   }
 
   return PreparationAttachment

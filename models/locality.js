@@ -288,6 +288,7 @@ module.exports = function(sequelize, DataTypes) {
   });
 
   Locality.associate = function(models) {
+    models.Locality.belongsTo(models.Geography, {as: 'geography', foreignKey: 'geographyId'})
     models.Locality.hasMany(models.GeoCoordDetail, {as: 'georefDetails', foreignKey: 'localityId'})
   }
 

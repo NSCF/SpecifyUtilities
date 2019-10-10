@@ -1,13 +1,13 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-  var PrepType = sequelize.define('PrepType', {
-    prepTypeId: {
+  return sequelize.define('geographytreedef', {
+    geographyTreeDefId: {
       type: DataTypes.INTEGER(11),
       allowNull: false,
       primaryKey: true,
       autoIncrement: true,
-      field: 'PrepTypeID'
+      field: 'GeographyTreeDefID'
     },
     timestampCreated: {
       type: DataTypes.DATE,
@@ -24,33 +24,20 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true,
       field: 'Version'
     },
-    isLoanable: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      field: 'IsLoanable'
+    fullNameDirection: {
+      type: DataTypes.INTEGER(11),
+      allowNull: true,
+      field: 'FullNameDirection'
     },
     name: {
       type: DataTypes.STRING(64),
       allowNull: false,
       field: 'Name'
     },
-    createdByAgentId: {
-      type: DataTypes.INTEGER(11),
+    remarks: {
+      type: DataTypes.TEXT,
       allowNull: true,
-      references: {
-        model: 'agent',
-        key: 'AgentID'
-      },
-      field: 'CreatedByAgentID'
-    },
-    collectionId: {
-      type: DataTypes.INTEGER(11),
-      allowNull: false,
-      references: {
-        model: 'collection',
-        key: 'UserGroupScopeId'
-      },
-      field: 'CollectionID'
+      field: 'Remarks'
     },
     modifiedByAgentId: {
       type: DataTypes.INTEGER(11),
@@ -60,10 +47,17 @@ module.exports = function(sequelize, DataTypes) {
         key: 'AgentID'
       },
       field: 'ModifiedByAgentID'
+    },
+    createdByAgentId: {
+      type: DataTypes.INTEGER(11),
+      allowNull: true,
+      references: {
+        model: 'agent',
+        key: 'AgentID'
+      },
+      field: 'CreatedByAgentID'
     }
   }, {
-    tableName: 'preptype'
+    tableName: 'geographytreedef'
   });
-
-  return PrepType
 };

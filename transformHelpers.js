@@ -1,3 +1,5 @@
+const {t:typy} = require('typy')
+
 //helper functions
 /**
  * Flattens collectors into dwc.recordedBy as lastName, initials, eg Smith, J.E.
@@ -102,6 +104,9 @@ function getPrepartions(co) {
       let count = prep.countAmt
       let type = typy(prep, 'type.name').safeObject || null
       if(type) {
+        if(type.toLowerCase().includes('corpse')) {
+          type = 'whole specimen/s'
+        }
         if(count > 0) {
           return `${count} ${type.trim()}`
         }
@@ -133,14 +138,17 @@ function getPartialDate(date, dateprecision){
   if(!date) { //no date
     return null
   }
-  // in Specify 1 is full date, 2 is month, 3 is year
-  let isoDate = date.toISOString().split('T')[0] //gives us just the date part
-
-  if(dateprecision == 1) {
-    return isoDate
+  
+  if(typeof date == 'object') {
+    date = date.toISOString().split('T')[0] //gives us just the date part
   }
 
-  let dateParts = isoDate.split('-')
+  // in Specify 1 is full date, 2 is month, 3 is year
+  if(dateprecision == 1) {
+    return date
+  }
+
+  let dateParts = date.split('-')
 
   if(dateprecision == 2) {
     dateParts.pop()
@@ -165,13 +173,19 @@ function getISODateRange(startDate, startDatePrecision, endDate, endDatePrecisio
 
   //error check
   if(endDate < startDate) {
-    
+    return '#err'
   }
   
   let dateprecision = Math.max(startDatePrecision, endDatePrecision) //we assume they have to have the same precision, so if one is a year, the other must be a year
 
-  startDate = startDate.toISOString().split('T')[0]
-  endDate = endDate.toISOString().split('T')[0]
+  if(typeof startDate == "object") {
+    startDate = startDate.toISOString().split('T')[0]
+  }
+
+  if(typeof endDate == 'object') {
+    endDate = endDate.toISOString().split('T')[0]
+  }
+  
   let startDateParts = startDate.split('-')
   let endDateParts = endDate.split('-')
 

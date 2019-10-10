@@ -26,6 +26,7 @@ module.exports = function(config){
         },
         
         timezone: '+02:00'
+        
     });
     
 }
