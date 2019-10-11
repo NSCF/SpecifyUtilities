@@ -155,6 +155,7 @@ module.exports = function(sequelize, DataTypes) {
       },
       field: 'AgentID'
     },
+    /*
     geoRefCompiledDate: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -169,6 +170,7 @@ module.exports = function(sequelize, DataTypes) {
       },
       field: 'CompiledByID'
     }
+    */
   }, {
     tableName: 'geocoorddetail'
   });

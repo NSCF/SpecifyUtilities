@@ -23,7 +23,7 @@ function getInitials(firstName, initials, middleInitial){
   }
   
   //another implicit else
-  if(firstName){
+  if(firstName && firstName.trim()){
     let firstInitial = firstName.trim()[0].toUpperCase()
     if(middleInitial && middleInitial.match(allCapsRegex)){ //requires that middle initial is caps
       if(middleInitial[0] == firstInitial){ //then we assume that initials are stored in middleInitial
@@ -35,7 +35,7 @@ function getInitials(firstName, initials, middleInitial){
       }
     }
   }
-  else if (middleInitial){
+  else if (middleInitial && middleInitial.trim()){
     if(middleInitial && middleInitial.match(allCapsRegex)){
       return middleInitial.replace(/\s/g, '').replace(/\./g, '').split('').join('.') + "."
     }
@@ -48,7 +48,7 @@ function getFormattedAgent(Agent){
   if(Agent) {
     let initials = getInitials(Agent.firstName, Agent.initials, Agent.middleInitial)
     if (initials){
-      if(Agent.lastName.trim()){
+      if(Agent.lastName && Agent.lastName.trim()){
         return `${Agent.lastName.trim()}, ${initials}`
       }
       else {
@@ -57,7 +57,7 @@ function getFormattedAgent(Agent){
     }
     
     //else
-    if(Agent.lastName.trim()){
+    if(Agent.lastName && Agent.lastName.trim()){
       return Agent.lastName.trim()
     }
   
@@ -87,7 +87,7 @@ function getOrganismQuantity(co) {
         return type.includes('corpse') || type.includes('specimen') || type.includes('pin')
       })
 
-      return preps.reduce((a,b) => a.countAmt + b.countAmt)
+      return preps.reduce((a,b,) => a.countAmt + b.countAmt, 0)
       
     }
   }
@@ -103,7 +103,7 @@ function getPrepartions(co) {
     let preps = co.preparations.map(prep => {
       let count = prep.countAmt
       let type = typy(prep, 'type.name').safeObject || null
-      if(type) {
+      if(type && type.trim()) {
         if(type.toLowerCase().includes('corpse')) {
           type = 'whole specimen/s'
         }
@@ -230,7 +230,7 @@ function getISODateRange(startDate, startDatePrecision, endDate, endDatePrecisio
 }
 
 function fixString(s) {
-  if(s){
+  if(s && s.trim()){
     s = s.trim()
     if(s[s.length - 1] == '.'){
       s = s.slice(0,-1) //nice

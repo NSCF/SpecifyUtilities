@@ -188,6 +188,11 @@ module.exports = function(sequelize, DataTypes) {
     tableName: 'attachment'
   });
 
+  Attachment.associate = function(models){
+    models.Attachment.belongsToMany(models.Preparation, {through: 'preparationattachment', foreignKey: 'attachmentId'})
+    models.Attachment.belongsToMany(models.CollectionObject, {through: 'collectionobjectattachment', foreignKey: 'attachmentId'})
+  }
+
   return Attachment
   
 };

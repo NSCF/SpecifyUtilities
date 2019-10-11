@@ -18,7 +18,9 @@ const {
  * @param {Boolean} includeNamespaces A flat for whether or not to include namespaces on the resulting fields
  */
 var transformToDwc = function(co, localityfields, includeNamespaces){
-  //TODO we need a darwin core abbreviated fields object
+  
+  //TODO add the paleocontext stuff for paleao collections
+  
   dwc = {}
 
   //record level fields
@@ -26,16 +28,31 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   dwc.institutionID = typy(co, 'collection.discipline.division.institution.uri').safeObject || null //TODO this needs confirmation
   //dwc.collectionID = typy(co, 'collection.GUID').safeObject || null //TODO confirm this too
   dwc.basisOfRecord = 'PreservedSpecimen' //because it's all museums
-  dwc.accessRights = typy(co, 'collection.discipline.division.institution.termsOfUse').safeObject || null
+
+  dwc.accessRights = null
+  let rightsFields = [
+    typy(co, 'collection.discipline.division.institution.termsOfUse').safeObject || null,
+    typy(co, 'collection.discipline.division.institution.copyright').safeObject || null,
+    typy(co, 'collection.discipline.division.institution.ipr').safeObject || null
+  ].filter(val => val && val.trim())
+  if(rightsFields.length > 0) {
+    dwc.accessRights = rightsFields.join(' | ')
+  }
+  
   dwc.licence = typy(co, 'collection.discipline.division.institution.licence').safeObject || null
   dwc.ownerInstitutionCode = null //TODO this needs to be resolved with Specify. Will be an if statement on whether owner institution exists and is different to institution code
-  dwc.modified = co.timestampModified.toISOString() //assumes that timestampModified is never null
+  
+  dwc.modified = null
+  if(co.timestampModified) {
+    dwc.modified = co.timestampModified.toISOString()
+  }
+  
   dwc.institutionCode = typy(co, 'collection.discipline.division.institution.code').safeObject || null
   dwc.collectionCode = typy(co, 'collection.code').safeObject || null
   
   //occurrence terms
   let catNum = co.catalogNumber || null
-  if(catNum){
+  if(catNum && typeof catNum == 'string'){
     catNum = catNum.replace(/^0+/, '')
   }
   dwc.catalogNumber = catNum //TODO how to build the catalog number for each collection; use .replace(/^0+/, '') to remove leading zeros
@@ -94,6 +111,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   dwc.identificationQualifier = null
   dwc.taxonRank = null
   dwc.taxonomicStatus = null
+  dwc.typeStatus =  null
   dwc.acceptedNameUsage = null
   dwc.identifiedBy = null
   dwc.dateIdentified = null
@@ -105,10 +123,10 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   //dwc.scientificName
   var currentDet = co.determinations.find(det => det.isCurrent) //we assume there is always a current det, but there may not be!
   if(currentDet) { 
-    let name = typy(currentDet, 'dettaxon.fullName').safeObject || null
-    let author = typy(currentDet, 'dettaxon.author').safeObject || null
-    let rank = typy(currentDet, 'dettaxon.rank.Name').safeObject || null
-    let qualifier = currentDet.qualifier || null
+    let name = typy(currentDet, 'dettaxon.fullName').safeObject || ""
+    let author = typy(currentDet, 'dettaxon.author').safeObject || ""
+    let rank = typy(currentDet, 'dettaxon.rank.Name').safeObject || ""
+    let qualifier = currentDet.qualifier || ""
     let accepted = typy(currentDet, 'dettaxon.isAccepted').safeObject || true //we don't want accidental falsy values here
     
     if(name){ //this should always be the case
@@ -143,18 +161,25 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
       let scientificName = name.trim()
       if(author) {
         scientificName = `${scientificName} ${author.trim()}`
+        dwc.scientificNameAuthorship = author.trim()
       }
       dwc.scientificName = scientificName
-      dwc.scientificNameAuthorship = author.trim()
       dwc.identificationQualifier = qualifier //this is an identification term
       dwc.taxonRank = rank.toLowerCase()
       dwc.taxonomicStatus = accepted? 'accepted' : 'invalid' //Specify only records accepted or not, no other categories for taxonomicStatus unless recorded in a custom field
 
       //acceptedNameUsage
       if(!accepted) {
-        let acceptedName = typy(currentDet, 'dettaxon.acceptedTaxon.fullName').safeObject || null
-        let acceptedAuthor = typy(currentDet, 'dettaxon.acceptedTaxon.author').safeObject || null
-        dwc.acceptedNameUsage = `${acceptedName.trim()} ${acceptedAuthor.trim()}`
+        let acceptedName = typy(currentDet, 'dettaxon.acceptedTaxon.fullName').safeObject || ""
+        let acceptedAuthor = typy(currentDet, 'dettaxon.acceptedTaxon.author').safeObject || ""
+        if(acceptedName && acceptedName.trim()){
+          if(acceptedAuthor && acceptedAuthor.trim()){
+            dwc.acceptedNameUsage = `${acceptedName.trim()} ${acceptedAuthor.trim()}`
+          }
+          else {
+            dwc.acceptedNameUsage = acceptedName.trim()
+          }
+        }
       }
       
       //identification terms
@@ -170,9 +195,22 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
       //TODO basisOfIdentification from a custom field
       dwc.identificationCertainty = currentDet.confidence || null
       dwc.identificationReferences = null //TODO we need to know the custom field for this
-      dwc.identificationRemarks = currentDet.remarks.trim() || null
-
+      if(currentDet.remarks && currentDet.remarks.trim()) {
+        dwc.identificationRemarks = currentDet.remarks.trim()
+      }
     }
+  }
+
+  //the type status
+  let typedets = co.determinations.filter(det => det.typeStatusName && det.typeStatusName.trim())
+  if(typedets.length > 0) {
+    let typestrings = []
+    typedets.forEach(det =>{
+      let typetaxonname = typy(currentDet, 'dettaxon.fullName').safeObject || ""
+      let author = typy(currentDet, 'dettaxon.author').safeObject || ""
+      typestrings.push(`${det.typeStatusName.trim()} of ${typetaxonname} ${author}`.trim())
+    })
+    dwc.typeStatus = typestrings.join(' | ')
   }
   
   //location fields
@@ -191,23 +229,30 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   dwc.county = null
 
   let basegeo = typy(co, 'collectingEvent.locality.geography').safeObject || null
-  let level = basegeo.level.name.toLowerCase()
-  if(level == 'state'){
-    dwc.stateProvince = basegeo.name
-  }
-  else if(['continent', 'country', 'county'].includes(level)){
-    dwc[level] = basegeo.name
-  }
-  //and it's ancestors
-  basegeo.ancestors.forEach(ancestorgeo => {
-    let level = ancestorgeo.level.name.toLowerCase()
-    if(level == 'state'){
-      dwc.stateProvince = ancestorgeo.name
+  if(basegeo){
+    let level = typy(basegeo, 'level.name').safeObject || null
+    if(level){
+      if(level == 'state'){
+        dwc.stateProvince = basegeo.name
+      }
+      else if(['continent', 'country', 'county'].includes(level)){
+        dwc[level] = basegeo.name
+      }
     }
-    else if(['continent', 'country', 'county'].includes(level)){
-      dwc[level] = ancestorgeo.name
-    }
-  })
+    
+    //and it's ancestors
+    basegeo.ancestors.forEach(ancestorgeo => {
+      let level = typy(ancestorgeo, 'level.name').safeObject || null
+      if(level){
+        if(level == 'state'){
+          dwc.stateProvince = ancestorgeo.name
+        }
+        else if(['continent', 'country', 'county'].includes(level)){
+          dwc[level] = ancestorgeo.name
+        }
+      }
+    })
+  }
   
   dwc.verbatimLocality = fixString(typy(co, 'collectingEvent.verbatimLocality').safeObject || null) //TODO there may also be a custom verbatim locality on the locality or collectionobject
   
@@ -232,7 +277,14 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   //locality
   let locfields = []
   if(localityfields) {
-    locfields = localityfields.split(',').map(fieldname => fieldname.trim())
+    locfields = localityfields.split(',').map(fieldname => {
+      if(fieldname && fieldname.trim()) {
+        return fieldname.trim()
+      }
+      else {
+        return null
+      }
+    })
     //TODO we might need a case sensitive way of finding the field names here
   }
   else {   //default to the standard locality fields
@@ -245,8 +297,96 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   })
   dwc.locality = locStrings
                     .map(string => fixString(string)) //collapse any white space strings to ''
-                    .filter( string=> string) //remove any that are '' or null
+                    .filter(string => string) //remove any that are '' or null
                     .join(', ')
+
+  //elevation/depth fields
+  dwc.verbatimElevation = null
+  dwc.minimumElevationInMeters = null
+  dwc.maximumElevationInMeters = null
+  dwc.verbatimElevation = null
+  dwc.minimumDepthInMeters = null
+  dwc.maximumDepthInMeters = null
+  dwc.verbatimDepth = null
+  
+  let elevationAccuracy = typy(co,`collectingEvent.locality.elevationAccuracy`).safeObject || null
+  let originalElevationUnit = typy(co,`collectingEvent.locality.originalElevationUnit`).safeObject || null
+  let maxElevation = typy(co,`collectingEvent.locality.maxElevation`).safeObject || null
+  let minElevation = typy(co,`collectingEvent.locality.minElevation`).safeObject || null
+  let verbatimElevation = typy(co,`collectingEvent.locality.verbatimElevation`).safeObject || null
+  
+  //TODO we need a flag for marine collections to record depth. For now I've just added terrestrial collections
+  //TODO this also needs to be tested for depth values which are recorded as negative
+  let verbatim = null
+  let max = null
+  let min = null
+  let elevAccuracy = null
+
+  if(verbatimElevation && verbatimElevation.trim()) {
+    verbatim = verbatimElevation.trim()
+  }
+
+  if(maxElevation || minElevation){
+    if(maxElevation && minElevation){
+      max = maxElevation
+      min = minElevation
+    }
+    else if(maxElevation){
+      if(elevationAccuracy){
+        max = maxElevation + elevationAccuracy
+        min = maxElevation - elevationAccuracy
+      }
+      else {
+        max = maxElevation
+        min = maxElevation
+      }
+    }
+    else{
+      if(elevationAccuracy){
+        max = minElevation + elevationAccuracy
+        min = minElevation - elevationAccuracy
+      }
+      else {
+        max = minElevation
+        min = minElevation
+      }
+    }
+  }
+  else {
+    if(verbatimElevation && verbatimElevation.trim() && /-?\d+/.test(verbatimElevation)){ 
+      if(verbatimElevation.includes('+/-') || verbatimElevation.includes('+-')){//a range is indicated in the verbatim string
+        let elevParts = verbatimElevation.split('+/-')
+        if(elevParts.length == 1){
+          elevParts = verbatimElevation.split('+-')
+        }
+        verbatim = elevParts[0].match(/-?\d+/)[0] //it might be negative
+        elevAccuracy = elevParts[1].match(/\d+/)[0]
+        if(elevAccuracy) {
+          max = verbatim + elevAccuracy
+          min = verbatim - elevAccuracy
+        }
+        else {
+          max = verbatim
+          min = verbatim
+        }
+      }
+      else { //its just a number
+        max = verbatimElevation.match(/-?\d+/)[0]
+        min = max
+      }
+    }
+  }
+
+  //remember the calculation from feet to meters
+  let isFeet = verbatimElevation && verbatimElevation.toLowerCase().includes('f')
+  if(!isFeet){
+    isFeet = originalElevationUnit && originalElevationUnit.toLowerCase().includes('f')
+  }
+  if( isFeet ){
+    max = Math.round(max * 0.3048)
+    min = Math.round(min * 0.3048)
+  }
+  //TODO now just add in the relevant fields
 
   //for coordinates, we assume we must have a verbatim coordinates value if there is are to be decimal coordinates
   if (dwc.verbatimCoordinates) {
@@ -255,22 +395,28 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
     let details = typy(co, 'collectingEvent.locality.georefDetails').safeObject || null
     if (details && Array.isArray(details) && details.length > 0) {
       let georef = details[0]
-      let accuracy = georef.geoRefAccuracy
+      
+      //accuracy first
+      let accuracy = georef.geoRefAccuracy || georef.maxUncertaintyEst
       if(accuracy){
-        let units = georef.geoRefAccuracyUnits.trim()
+        let units = georef.geoRefAccuracyUnits || georef.maxUncertaintyEstUnit
         if(units) {
-          if (['m', 'meter', 'meters'].includes(unit.toLowerCase())){
+          units = units.trim()
+          if (['m', 'meter', 'meters'].includes(georef.maxUncertaintyEst.toLowerCase())){
             dwc.coordinateUncertaintyInMeters = accuracy
           }
-          else if (['mi', 'mile', 'miles'].includes(unit.toLowerCase())) {
+          else if (['mi', 'mile', 'miles'].includes(units.toLowerCase())) {
             dwc.coordinateUncertaintyInMeters = (accuracy / 1609.34)
           }
-          else if (['k', 'km', 'kilo', 'kilometer', 'kilometers'].includes(unit.toLowerCase())) {
+          else if (['k', 'km', 'kilo', 'kilometer', 'kilometers'].includes(units.toLowerCase())) {
             dwc.coordinateUncertaintyInMeters = accuracy / 1000
           }
           else {
             dwc.coordinateUncertaintyInMeters = '#err' //so we can pick up cases where we don't know what the unit is
           }
+        }
+        else {
+          dwc.coordinateUncertaintyInMeters = '#err' //so we can pick up cases where we don't know what the unit is
         }
       }
 
@@ -279,8 +425,11 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
       dwc.georeferencedBy = getFormattedAgent(georef.geoRefAgent)
       dwc.georeferencedDate = georef.geoRefDetDate || null
       dwc.georeferenceProtocol = georef.protocol || null
-      dwc.georeferenceSources = georef.source || null
+      dwc.georeferenceSources = typy(co, 'collectingEvent.locality.latlongMethod').safeObject || georef.source || null
       dwc.georeferenceRemarks = fixString(georef.geoRefRemarks || null)
+      if (georef.noGeoRefBecause && georef.noGeoRefBecause.trim()) {
+        dwc.georeferenceRemarks += ` | ${fixString(georef.noGeoRefBecause)}`
+      }
       dwc.georeferenceVerificationStatus =  georef.geoRefVerificationStatus || null
 
     }
@@ -288,6 +437,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   else {
     dwc.decimalLatitude = null
     dwc.decimalLongitude = null
+    dwc.coordinateUncertaintyInMeters = null
     dwc.verbatimSRS = null
     dwc.geodeticDatum = null
     dwc.georeferencedBy = null
