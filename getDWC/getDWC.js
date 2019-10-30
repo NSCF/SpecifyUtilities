@@ -1,5 +1,6 @@
 const {t:typy} = require('typy') //for working with deeply nested models. See https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
 const { performance } = require('perf_hooks')
+const csv = require('fast-csv')
 const ms = require('pretty-ms');
 
 let getModels = require('./models/models')
@@ -56,6 +57,7 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
   try {
     performance.mark('fetch-records')
     collectionObjects = await models.CollectionObject.findAll(findConfig)
+    collectionObjects = collectionObjects.map(co => co.get({plain:true})) //drop all the model stuff. Just plain objects
     performance.mark('end-fetch-records')
 
     if (removeNSSL){
@@ -171,18 +173,38 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
 
     //we now have our dataset
     //TODO write to appropriate format (option for csv or DWCa)
-    //performance.mark('write-file')
-    //performance.mark('end-write-file')
+    performance.mark('write-file')
+
+    let outfile = ''
+    let fullCollName = ''
+    if(db.institution) {
+      outfile = `${db.institution}_${targetCollection}.csv`
+      fullCollName = `${db.institution} ${targetCollection}`
+    }
+    else {
+      outfile = `${targetCollection}.csv`
+      fullCollName =  targetCollection
+    }
+    
+    try {
+      await writeResults(outfile, dwcrecords)
+    }
+    catch(err) {
+      console.log('error writing results for ' + fullCollName + ': ' + err.message)
+    }
+    
+    performance.mark('end-write-file')
 
     //all done - get performance
     performance.measure('fetch-records to end-fetch-records', 'fetch-records', 'end-fetch-records')
     performance.measure('get-ancestry to end-get-ancestry', 'get-ancestry', 'end-get-ancestry')
     performance.measure('makeDWC to end-makeDWC', 'makeDWC', 'end-makeDWC')
+    performance.measure('write-file to end-write-file', 'write-file', 'end-write-file')
     let times = {}
     times.getRecords = ms(performance.getEntriesByName('fetch-records to end-fetch-records')[0].duration)
     times.getAncestry = ms(performance.getEntriesByName('get-ancestry to end-get-ancestry')[0].duration)
     times.makeDWC = ms(performance.getEntriesByName('makeDWC to end-makeDWC')[0].duration)
-    //times.writeFile = ms(performance.getEntriesByName('write-file to end-write-file')[0].duration)
+    times.writeFile = ms(performance.getEntriesByName('write-file to end-write-file')[0].duration)
 
     performance.clearMarks()
     performance.clearMeasures()
@@ -265,6 +287,15 @@ async function getAncestors(leaves, model, inOperator, id, parentid, includes, p
 
   //leaves are objects so no need to return
   let i = 0
+}
+
+//a promisified version of csv.writeToPath()
+function writeResults(path, data){
+  return new Promise((resolve, reject) => {
+    csv.writeToPath(path, data, {headers: true})
+    .on('error', err => reject(err))
+    .on('finish', _ => resolve())
+  })
 }
 
 //helper function

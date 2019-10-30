@@ -79,6 +79,8 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
     dwc.recordedBy = null
   }
 
+  //TODO Darwin Core doesn't include something for the number of specimens in a seriesr375yt
+  /*
   let qty = getOrganismQuantity(co)
   if(qty == 0) {
     dwc.organismQuantity = null
@@ -88,14 +90,15 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
     dwc.organismQuantity = qty
     dwc.organismQuantityType = 'individuals'
   }
+  */
 
   //TODO sex and lifeStage - these will be custom fields on every database. See https://github.com/tdwg/dwc/issues/36 for explanation what goes into these. 
 
   dwc.preparations = getPrepartions(co) || null
+
   //dwc.associatedMedia = null //TODO complete getAssociatedMedia(). I think this might have to come from Flickr
   
   //taxon and determination terms
-
   dwc.kingdom = null
   dwc.phylum = null
   dwc.class = null
@@ -132,6 +135,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
     if(name){ //this should always be the case
       
       //add the taxon ranks
+      //TODO we have to construct infraspecificEpithet for varieties and subspecies (eg we can have varieties of subspecies)
       let terms = Object.keys(dwc)
       if(terms.includes(rank.toLowerCase())){
         dwc[rank.toLowerCase()] = name
@@ -139,13 +143,13 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
       else if(rank == 'Species'){
         dwc.specificEpithet = typy(currentDet, 'dettaxon.name').safeObject || null
       }
-      else if(rank == "Subspecies"){
+      else if(rank == "Subspecies" || rank == "Variety"){
         dwc.infraspecificEpithet = typy(currentDet, 'dettaxon.name').safeObject || null
       }
 
       //now ancestors
       currentDet.dettaxon.ancestors.forEach(ancestorTaxon => {
-        let ancestorName = ancestorTaxon.fullName
+        let ancestorName = ancestorTaxon.name
         let ancestorRank = ancestorTaxon.rank.Name
         if(terms.includes(ancestorRank.toLowerCase())){
           dwc[ancestorRank.toLowerCase()] = ancestorName
@@ -153,8 +157,13 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
         else if(rank == 'Species'){
           dwc.specificEpithet = ancestorName
         }
-        else if(rank == "Subspecies"){
-          dwc.infraspecificEpithet = ancestorName
+        else if(rank == "Subspecies" || "Variety"){
+          if(dwc.infraspecificEpithet) { //something has already been added here
+            //do nothing. This is a quirk of DwC -we can loose subspecies if there is a variety
+          }
+          else {
+            dwc.infraspecificEpithet = ancestorName
+          }
         }
       })
 

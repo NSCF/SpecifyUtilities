@@ -1,5 +1,5 @@
-let getModels = require('../models/models')
-let configs = require('../dbconfigs')
+let getModels = require('../../models/models')
+let configs = require('../../dbconfigs')
 let { getAncestors } = require('../transformHelpers')
 
 let db = 'local' //lets test this with a few different databases

@@ -1,7 +1,5 @@
 const getDWC = require('./getDWC')
 
-
-
 let allLocal = ['AFRC Specimens', 'East London Birds', 'KZNM Herpetology', 'KZNM Mammals', 'KZNM Taxidermy', 
 'McGregor Museum Bird Collection', 'McGregor Museum Herpetology Collection', 'McGregor Museum Mammal Collection', 
 'PEM Amphibians', 'PEM Reptiles', 'PEM Mammals', 'UP Observations', 'UP Specimens', 'ZEN355']
@@ -17,8 +15,11 @@ let collections = {
   local: allLocal
 }
 
-let institution = 'local'
-let singleCollection =  null//optional to get specific collections, otherwise null
+let institution = 'ditsong'
+let singleCollection =  'Herpetology'//optional to get specific collections, otherwise null
+let random = true
+let limit = 1000
+let offset = null
 
 getAllRecords(collections, institution, singleCollection)
 
@@ -38,7 +39,7 @@ async function getAllRecords(collections, institution, singleCollection){
   let results = []
   if(singleCollection){
     console.log('getting records for ' + singleCollection)
-    results.push(await getDarwinCore({db: institution, targetCollection: singleCollection}))
+    results.push(await getDarwinCore({db: institution, targetCollection: singleCollection, limit: limit, offset: offset, random: random}))
   }
   else {
     for (const collection of collections[institution]) {

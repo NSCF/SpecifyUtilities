@@ -34,7 +34,7 @@
       "type": "node",
       "request": "launch",
       "name": "testGetDWC",
-      "program": "${workspaceFolder}\\testGetDWC.js",
+      "program": "${workspaceFolder}\\getDWC\\index.js",
       "cwd": "${workspaceRoot}"
     },
     {

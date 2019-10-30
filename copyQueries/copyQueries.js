@@ -11,16 +11,10 @@ var conn = mysql.createConnection({
 
 var sourceUser = 'ian'; //the user name
 var targetUsers = [
-  'pholosi',
-  'karin',
-  'remember',
-  'rethabile',
-  'thando',
-  'thembile',
-  'theresa'
+  'rethabile'
 ];
 
-var copyQueries = ['taxa'];
+var copyQueries = [];
 
 (async function(){
 
