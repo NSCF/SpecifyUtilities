@@ -15,13 +15,14 @@ let collections = {
   local: allLocal
 }
 
-let institution = 'ditsong'
-let singleCollection =  'Herpetology'//optional to get specific collections, otherwise null
-let random = true
-let limit = 1000
+let institution = 'local'
+let singleCollection =  'PEM Reptiles' //optional to get specific collections, otherwise null
+let random = false
+let limit = null
 let offset = null
+let taxa = ['Bufo', 'Sclerophrys'/*, 'Chondrodactylus', 'Goggia'*/] //to filter for specific taxa
 
-getAllRecords(collections, institution, singleCollection)
+getAllRecords(collections, institution, taxa, singleCollection, limit, offset, random)
 
 //FUNCTIONS
 
@@ -34,17 +35,17 @@ function getDarwinCore(params){
   })
 }
 
-async function getAllRecords(collections, institution, singleCollection){
+async function getAllRecords(collections, institution, taxa, singleCollection, limit, offset, random){
   
   let results = []
   if(singleCollection){
     console.log('getting records for ' + singleCollection)
-    results.push(await getDarwinCore({db: institution, targetCollection: singleCollection, limit: limit, offset: offset, random: random}))
+    results.push(await getDarwinCore({db: institution, targetCollection: singleCollection, taxa: taxa, limit: limit, offset: offset, random: random}))
   }
   else {
     for (const collection of collections[institution]) {
       console.log('getting records for ' + collection)
-      let result = await getDarwinCore({db: institution, targetCollection: collection})
+      let result = await getDarwinCore({db: institution, targetCollection: collection, taxa: taxa, limit: limit, offset: offset, random: random})
       results.push(result)
     }
   }

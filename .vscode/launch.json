@@ -8,8 +8,8 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
-      "program": "${workspaceFolder}\\index.js",
+      "name": "copy queries",
+      "program": "${workspaceFolder}\\copyQueries\\copyQueries.js",
       "cwd": "${workspaceRoot}",
       "runtimeArgs": [
         "--harmony",
@@ -48,7 +48,14 @@
       "type": "node",
       "request": "launch",
       "name": "testHierarchies",
-      "program": "${workspaceFolder}\\scratchpad\\taxonhierarchy.js",
+      "program": "${workspaceFolder}\\getDWC\\scratchpad\\taxonhierarchy.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "filterDets",
+      "program": "${workspaceFolder}\\getDWC\\scratchpad\\filterDets.js",
       "cwd": "${workspaceRoot}"
     }
   ]

@@ -1,3 +1,6 @@
+const Sequelize = require('sequelize')
+const Op = Sequelize.Op
+
 module.exports = function(models, targetCollection) {
   //see https://github.com/sequelize/sequelize/issues/9869 for the issue about includeing attributes
   return {
@@ -84,7 +87,7 @@ module.exports = function(models, targetCollection) {
               },
               {
                 model: models.Taxon,
-                as: 'acceptedTaxon',
+                as: 'acceptedTaxon', //Specify updates the accepted taxon for chains of synonymy to the current name
                 attributes: ['taxonID', 'parentID','guid', 'name', 'fullName', 'author', 'isAccepted'],
               }
             ]

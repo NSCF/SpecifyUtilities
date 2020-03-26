@@ -22,9 +22,10 @@ let getConfig = require('./getDWCConfig')
  * @param {Number} offset 
  * @param {Number} limit 
  */
-async function getDWC({db, targetCollection, localityFields = null, removeNSSL = false, addNamespaces = true, removeBlankColumns = true, random = false, offset = null, limit = null}) {
+async function getDWC({db, targetCollection, taxa, localityFields = null, removeNSSL = false, addNamespaces = true, removeBlankColumns = true, random = false, offset = null, limit = null}) {
   
   let models = getModels(configs[db])
+  let Op = models.Sequelize.Op
   let findConfig = getConfig(models, targetCollection)
 
   //lets not rely on taxon names being flagged as NSSL. Rather provide a specific list of NSSL names
@@ -39,7 +40,46 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
 
   //TODO use collectionobject.date1 for the embargo date, and then set where below to filter those out. - need a parameter for this in the function
 
-  
+  //add additional filters if provided (currently only taxa)
+  if (taxa && Array.isArray(taxa) && taxa.length > 0) {
+
+    //we can't use limit, offset or random reliably with where in queries with nested objects, so...
+    limit = null
+    offset = null
+    random = null
+
+    //get the nodenumbers for all taxa and their children
+    let proms = []
+    taxa.forEach(taxon => {
+      proms.push(models.Taxon.findAll({ where: {name: taxon.trim()}}))
+    })
+
+    let searchresults = await Promise.all(proms)
+
+    //create the actual filter object
+    let whereArr = []
+
+    searchresults.forEach(searchresult => { 
+      //searchresult is an array
+      searchresult.forEach(taxonObj => {
+        whereArr.push( {[Op.between]: [taxonObj.nodeNumber, taxonObj.highestChildNodeNumber]} )      
+      }) 
+    })
+
+    if(whereArr.length > 1) {
+      //see https://sequelize.org/v4/manual/tutorial/querying.html#combinations
+      let whereObj = {
+        [Op.or]: whereArr
+      }
+
+      //add it to findConfig
+      findConfig.where = { '$determinations.dettaxon.nodeNumber$': whereObj}
+    }
+    else {
+      findConfig.where = { '$determinations.dettaxon.nodeNumber$' : whereArr[0]}
+    }   
+
+  }
 
   if (random){
     findConfig.order = models.sequelize.random()
@@ -53,6 +93,9 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
     findConfig.offset = offset
   }
 
+  //just for testing
+  //findConfig.logging = console.log
+
   let collectionObjects = [] //just a declaration
   try {
     performance.mark('fetch-records')
@@ -60,6 +103,8 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
     collectionObjects = collectionObjects.map(co => co.get({plain:true})) //drop all the model stuff. Just plain objects
     performance.mark('end-fetch-records')
 
+    //TODO move this to after we have the prefered taxon name and check that name also
+    //TODO also check ancestry so that we can filter out higher taxa
     if (removeNSSL){
       collectionObjects = collectionObjects.filter(co => {
         var currentDetArr = co.determinations.filter(det => det.isCurrent) //we assume there is always a current det, but there may not be!
@@ -73,21 +118,26 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
       })
     }
 
-    //get the taxon and geography ancestors
+    //get the taxon and geography ancestors and accepted taxa
     let taxa = []
     let geographies = []
     collectionObjects.forEach(co => {
       
       //taxa
-      var currentDet = co.determinations.find(det => det.isCurrent) //we assume there is always a current det, but there may not be!
-      if(currentDet && currentDet.dettaxon) { 
-        taxa.push(currentDet.dettaxon)
-      }
-    
+      co.determinations.forEach(det => {
+        if(det.dettaxon) { 
+          if(taxa.findIndex(taxon => taxon.taxonID == det.dettaxon.taxonID) < 0) { //is the taxon already in the array?
+            taxa.push(det.dettaxon)
+          }
+        }
+      }) 
+      
       //geography
       var geo = typy(co, 'collectingEvent.locality.geography').safeObject || null
       if(geo) {
-        geographies.push(geo)
+        if(geographies.findIndex(geog => geog.geographyId == geo.geographyId) < 0) {
+          geographies.push(geo)
+        }
       }
     })
     
@@ -110,6 +160,20 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
       }
     ]
 
+    //get accepted taxa
+    performance.mark('get-accepted')
+
+    try {
+      await getAcceptedTaxa(taxa, taxonIncludes, models)
+    }
+    catch(err) {
+      let msg = `error fetching accepted taxa: ${err.message}`
+      err.message = msg
+      throw err
+    }
+    
+    performance.mark('end-get-accepted')
+
     performance.mark('get-ancestry')
     //get ancestors for taxonomy
     try {
@@ -131,8 +195,39 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
       throw err
     }
 
+    //because taxa and geo are arrays of unique objects we have to update ancestry for all collection objects
+    collectionObjects.forEach(co => {
+
+      //taxa
+      if(co.determinations && Array.isArray(co.determinations) && co.determinations.length > 0) {
+        co.determinations.forEach(det => {
+          if(det.dettaxon && !det.dettaxon.ancestors) {
+            //find the ancestors
+            let taxonWithAncestors = taxa.find(taxon => taxon.taxonID == det.dettaxon.taxonID) 
+            det.dettaxon.ancestors = taxonWithAncestors.ancestors
+          }
+        })
+      }
+      
+      //geography
+      if(co.collectingEvent && co.collectingEvent.locality && co.collectingEvent.locality.geography && !co.collectingEvent.locality.geography.ancestors) {
+        let geoWithAncestors = geographies.find(geography => geography.geographyId == co.collectingEvent.locality.geography.geographyId)
+        co.collectingEvent.locality.geography.ancestors = geoWithAncestors.ancestors
+      }
+
+    })
+
     performance.mark('end-get-ancestry')
+
+    //TESTING
+    let recordsWithoutTaxonAncestry = collectionObjects
+      .filter(co => co.determinations && Array.isArray(co.determinations) && co.determinations.length > 0) //those with determinations
+      .filter(co => co.determinations.filter(det => det.dettaxon).some(det => !det.dettaxon.ancestors || !Array.isArray(det.dettaxon.ancestors) || det.dettaxon.length == 0)) //those where some dets don't have ancestors
     
+    let recordsWithoutGeographyAncestry = collectionObjects
+      .filter(co => co.locality && co.locality.geography)
+      .filter(co => !co.locality.geography.ancestors || !Array.isArray(co.locality.geography.ancesors))
+
     //flatten 
     performance.mark('makeDWC')
     let dwcrecords = []
@@ -177,9 +272,9 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
 
     let outfile = ''
     let fullCollName = ''
-    if(db.institution) {
-      outfile = `${db.institution}_${targetCollection}.csv`
-      fullCollName = `${db.institution} ${targetCollection}`
+    if(db) {
+      outfile = `${db}_${targetCollection}.csv`
+      fullCollName = `${db} ${targetCollection}`
     }
     else {
       outfile = `${targetCollection}.csv`
@@ -187,7 +282,7 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
     }
     
     try {
-      await writeResults(outfile, dwcrecords)
+      await writeResults(`./DWCFiles/${outfile}`, dwcrecords)
     }
     catch(err) {
       console.log('error writing results for ' + fullCollName + ': ' + err.message)
@@ -197,11 +292,13 @@ async function getDWC({db, targetCollection, localityFields = null, removeNSSL =
 
     //all done - get performance
     performance.measure('fetch-records to end-fetch-records', 'fetch-records', 'end-fetch-records')
+    performance.measure('get-accepted to end-get-accepted', 'get-accepted', 'end-get-accepted')
     performance.measure('get-ancestry to end-get-ancestry', 'get-ancestry', 'end-get-ancestry')
     performance.measure('makeDWC to end-makeDWC', 'makeDWC', 'end-makeDWC')
     performance.measure('write-file to end-write-file', 'write-file', 'end-write-file')
     let times = {}
     times.getRecords = ms(performance.getEntriesByName('fetch-records to end-fetch-records')[0].duration)
+    times.getAccepted = ms(performance.getEntriesByName('get-accepted to end-get-accepted')[0].duration)
     times.getAncestry = ms(performance.getEntriesByName('get-ancestry to end-get-ancestry')[0].duration)
     times.makeDWC = ms(performance.getEntriesByName('makeDWC to end-makeDWC')[0].duration)
     times.writeFile = ms(performance.getEntriesByName('write-file to end-write-file')[0].duration)
@@ -287,6 +384,37 @@ async function getAncestors(leaves, model, inOperator, id, parentid, includes, p
 
   //leaves are objects so no need to return
   let i = 0
+}
+
+async function getAcceptedTaxa(fetchedTaxa, taxonIncludes, models){
+  
+  let Op = models.Sequelize.Op
+  
+  //recursively fetch accepted taxa - not actually required Specify updates taxon.acceptedID to the current name. 
+  let acceptedIDs = fetchedTaxa.map(taxon => taxon.acceptedID).filter(id => id)
+  let taxonIDsToFetch = acceptedIDs.filter(acceptedID => !fetchedTaxa.some(fetchedTaxon => fetchedTaxon.taxonID == acceptedID))
+  while (taxonIDsToFetch.length > 0) {
+    try {
+      let newTaxa = await models.Taxon.findAll(
+        {
+          where: {
+            taxonID: {
+              [Op.in]: taxonIDsToFetch
+            }
+          },
+          include: taxonIncludes
+        }
+      )
+
+      fetchedTaxa =[...fetchedTaxa, ...newTaxa]
+
+      acceptedIDs = newTaxa.map(taxon => taxon.acceptedID).filter(id => id)
+      taxonIDsToFetch = acceptedIDs.filter(acceptedID => !fetchedTaxa.some(fetchedTaxon => fetchedTaxon.taxonID == acceptedID))
+    }
+    catch(err) {
+      throw err
+    }
+  }
 }
 
 //a promisified version of csv.writeToPath()

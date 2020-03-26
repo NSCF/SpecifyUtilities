@@ -11,7 +11,9 @@ var conn = mysql.createConnection({
 
 var sourceUser = 'ian'; //the user name
 var targetUsers = [
-  'rethabile'
+  "fanele",
+  "nelisiwe",
+  "rethabile"
 ];
 
 var copyQueries = [];
