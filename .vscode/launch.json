@@ -57,6 +57,34 @@
       "name": "filterDets",
       "program": "${workspaceFolder}\\getDWC\\scratchpad\\filterDets.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Specify API login",
+      "program": "${workspaceFolder}\\SpecifyTaxonAPI\\specifyLogin.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Specify Taxon API",
+      "program": "${workspaceFolder}\\SpecifyTaxonAPI\\index.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test map records",
+      "program": "${workspaceFolder}\\SvelteLabels\\src\\tests\\kznHerpsMapFuncTest.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test scratchpad",
+      "program": "${workspaceFolder}\\scratchpad.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }
