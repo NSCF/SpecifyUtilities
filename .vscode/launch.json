@@ -85,6 +85,13 @@
       "name": "Test scratchpad",
       "program": "${workspaceFolder}\\scratchpad.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test splitCollectors",
+      "program": "${workspaceFolder}\\splitCollectors\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }

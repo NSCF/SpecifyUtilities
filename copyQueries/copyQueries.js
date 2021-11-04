@@ -16,7 +16,7 @@ var targetUsers = [
   "rethabile"
 ];
 
-var copyQueries = [];
+var copyQueries = []; //the names of the queries to copy; will copy all if empty
 
 (async function(){
 
