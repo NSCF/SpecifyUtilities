@@ -14,7 +14,7 @@
     "mysql": "github:mysqljs/mysql",
     "mysql2": "^1.7.0",
     "pretty-ms": "^5.0.0",
-    "sequelize": "^4.44.0",
+    "sequelize": "^5.15.1",
     "typy": "^3.3.0"
   }
 }
