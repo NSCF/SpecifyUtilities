@@ -4,9 +4,9 @@ import csv from 'fast-csv';
 import splitCollectors from "./splitCollectors.js";
 
 const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const csvFile = String.raw`Collectors-edited-OVR-Open-Refine.csv` //the full file path and name
+const csvFile = String.raw`NCAH-Type-collection-Specify-edited-ie_check.csv` //the full file path and name
 const collectorField = 'Collector edited'
-const institutionField = 'Institution'
+const institutionField = 'Collecting_institution'
 
 //NOTE WE CANNOT HAVE MIXED INSTITUTIONS AND PEOPLE IN THE COLLECTORS FIELD. THIS ASSUMES THAT IF THERE IS AN INSTITUTION, IT APPLIES TO ALL COLLECTORS
 
@@ -17,15 +17,28 @@ fs.createReadStream(path.join(csvPath, csvFile))
     .on('data', row => {
       row.collectorsArray = splitCollectors(row[collectorField])
 
-      //NB we add the institution to all collectors!
-      if(row[institutionField] && row[institutionField].trim()) {
-        if(row.collectorsArray.length) {
-          for (let coll of row.collectorsArray) {
-            coll.institution = row[institutionField].trim()
+      
+      if(row.hasOwnProperty(institutionField)) { //the field exists
+        if (row[institutionField] && row[institutionField].trim()) { //it has a value
+          if(row.collectorsArray.length) { //if there are collectors we add the institution to all collectors as an address
+            for (let coll of row.collectorsArray) {
+              coll.institution = row[institutionField].trim()
+            }
           }
-          row[institutionField] = null //The institution is now recorded for each collector
+          else {
+            //we need to add one for just the institution
+            const coll = {
+              title: null,
+              firstName: null,
+              lastName: row[institutionField], //specify stores institution names in the lastName field when agents are institutions
+              initials: null, 
+              institution: null
+            }
+            row.collectorsArray.push(coll)
+          }
         }
-      }
+        delete row[institutionField]
+      } 
       records.push(row)
     })
     .on('end', rowCount => {

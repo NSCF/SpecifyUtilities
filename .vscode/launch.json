@@ -92,6 +92,13 @@
       "name": "Test splitCollectors",
       "program": "${workspaceFolder}\\splitCollectors\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test getHigherClassification",
+      "program": "${workspaceFolder}\\getHigherClassification\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }
