@@ -9,11 +9,11 @@ import * as path from 'path';
 import csv from 'fast-csv';
 import fetch from 'node-fetch';
 
-const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const csvFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection-13-05-2020-Specify-edited.csv` //the full file path and name
-const targetField = 'Parasite genus 1'
+const csvPath = String.raw`D:\NSCF Data WG\Current projects\Herp specimen digitization\HerpSpecimenData\Durban Herp Specimen Data`
+const csvFile = String.raw`DNSM_reptiles_all_taxa_missingNames.csv` //the full file path and name
+const targetField = 'taxon_name'
 const targetKingdom = 'Animalia'
-const targetRanks = ['phylum', 'class', 'subclass', 'order', 'suborder', 'family', 'subfamily'] //the ranks we want, note the rank we're searching on is added as 'name'
+const targetRanks = ['phylum', 'class', 'subclass', 'superorder', 'order', 'suborder', 'superfamily', 'family', 'subfamily'] //the ranks we want, note the rank we're searching on is added as 'name'
 
 const names = {}
 fs.createReadStream(path.join(csvPath, csvFile))
@@ -26,6 +26,8 @@ fs.createReadStream(path.join(csvPath, csvFile))
         console.error(`The field '${targetField}' does not exist in the dataset'`)
         process.exit()
       }
+
+      //if we have species and subspecies we want to get the genera as well...
 
       if(!names.hasOwnProperty(row[targetField])){
         names[row[targetField]] = true
@@ -48,10 +50,38 @@ fs.createReadStream(path.join(csvPath, csvFile))
       let namesFound = 0
       let notFound = [] //for nothing returned and those with no classification
       
-      const pipedNameString = uniqueNames.join('|')
-      const url = `https://verifier.globalnames.org/api/v1/verifications/${pipedNameString}?pref_sources=1`
-      const response = await fetch(url)
-      const results = await response.json() // this is an array
+
+      const url = `https://verifier.globalnames.org/api/v1/verifications`
+      const callBody = {
+        nameStrings: uniqueNames,
+        preferredSources: [1],
+        withAllMatches: false,
+        withCapitalization: false
+      }
+      
+      let response
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(callBody)
+        })
+      }
+      catch(err) {
+        console.error('error calling globalnames:', err.message)
+        process.exit()
+      }
+       
+      let results
+      try {
+        results = await response.json() // this is an array
+      }
+      catch(err) {
+        console.error('error parsing json:', err.message)
+        process.exit()
+      }
 
       const output = []
       for (const result of results) {
@@ -114,13 +144,18 @@ fs.createReadStream(path.join(csvPath, csvFile))
             const outputObj = {}
               
             for (const targetRank of targetRanks) {
-              outputObj[targetRank] = result[targetRank] || null
+              outputObj[targetRank] = result[targetRank] && result[targetRank].trim() ?  result[targetRank].trim() : null
             }
 
-            outputObj.name= result.name
-
-            output.push(outputObj)
-            namesFound++
+            if(outputObj[targetRanks[0]]) {
+              outputObj.name= result.name
+              output.push(outputObj)
+              namesFound++
+            }
+            else{
+              stillNotFound.push(result.name)
+            }
+            
           }
           else {
             stillNotFound.push(result.name)

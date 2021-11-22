@@ -99,6 +99,13 @@
       "name": "Test getHigherClassification",
       "program": "${workspaceFolder}\\getHigherClassification\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test findMissingNames",
+      "program": "${workspaceFolder}\\getMissingTaxa\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }
