@@ -9,11 +9,12 @@ import * as path from 'path';
 import csv from 'fast-csv';
 import fetch from 'node-fetch';
 
-const csvPath = String.raw`D:\NSCF Data WG\Current projects\Herp specimen digitization\HerpSpecimenData\Durban Herp Specimen Data`
-const csvFile = String.raw`DNSM_reptiles_all_taxa_missingNames.csv` //the full file path and name
-const targetField = 'taxon_name'
-const targetKingdom = 'Animalia'
-const targetRanks = ['phylum', 'class', 'subclass', 'superorder', 'order', 'suborder', 'superfamily', 'family', 'subfamily'] //the ranks we want, note the rank we're searching on is added as 'name'
+const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
+const csvFile = String.raw`NCAH-Type-collection-Specify-edited-ie_check_fieldsAdded.csv` //the full file path and name
+const targetField = 'PARGENUS_edited'
+const restrictToRank = 'kingdom'
+const restrictToName = 'Animalia'
+const targetRanks = ['phylum', 'class', 'subclass', 'order', 'suborder', 'superfamily', 'family', 'subfamily'] //the ranks we want, note the rank we're searching on is added as 'name'
 
 const names = {}
 fs.createReadStream(path.join(csvPath, csvFile))
@@ -98,7 +99,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
               classification[rank.toLowerCase()] = name
             }
 
-            if(classification.kingdom && classification.kingdom == targetKingdom){
+            if(classification[restrictToRank] && classification[restrictToRank] == restrictToName){
               
               const outputObj = {}
               
@@ -133,7 +134,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
 
         let proms = []
         for (const name of notFound) {
-          proms.push(fetchGBIFTaxon(name, targetKingdom))
+          proms.push(fetchGBIFTaxon(name, restrictToRank, restrictToName))
         }
 
         let gbifResults = await Promise.all(proms)
@@ -179,12 +180,12 @@ fs.createReadStream(path.join(csvPath, csvFile))
     })
 
 
-const fetchGBIFTaxon = async (name, targetKingdom) => {
+const fetchGBIFTaxon = async (name, restrictToRank, restrictToName) => {
   const url = `https://api.gbif.org/v1/species?name=${name}`
   const response = await fetch(url)
   const json = await response.json()
   if(json.hasOwnProperty('results') && Array.isArray(json.results) && json.results.length){
-    const candidates = json.results.filter(x => x.hasOwnProperty('kingdom') && x.kingdom == targetKingdom)
+    const candidates = json.results.filter(x => x.hasOwnProperty(restrictToRank) && x[restrictToRank] == restrictToName)
     if(candidates.length) {
       const taxon = candidates[0]
       return {name, taxon}

@@ -65,7 +65,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
       }
 
       //and write it out again
-      csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_fieldsAdded.csv')), records, {headers:true})
+      csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_collectorFieldsAdded.csv')), records, {headers:true})
       .on('error', err => console.error('error writing file:', err.message))
       .on('finish', () => console.log('All done!'));
 

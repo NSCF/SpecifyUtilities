@@ -6,9 +6,9 @@ import csv from 'fast-csv';
 import * as mysql from 'mysql'
 
 const csvPath = String.raw`D:\NSCF Data WG\Current projects\Herp specimen digitization\HerpSpecimenData\Durban Herp Specimen Data`
-const csvFile = String.raw`DNSM_reptiles_all_taxa.csv`
+const csvFile = String.raw`DNSM_WB_taxon_upload1.csv`
 
-const taxonNameField = 'taxon_name'
+const taxonNameField = 'name'
 
 const conn = mysql.createConnection({
   host     : 'localhost',
