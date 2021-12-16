@@ -41,6 +41,7 @@ function makeCollectorObject(collector) {
     'van',
     'der',
     'de',
+    'te'
   ]
 
   const obj = {
@@ -119,7 +120,7 @@ function makeCollectorObject(collector) {
         }
       } 
     }
-    else { //no spaces, so presumably just a surname
+    else { //no spaces, so presumably just a lastName
       obj.lastName = collector
       return obj
     }

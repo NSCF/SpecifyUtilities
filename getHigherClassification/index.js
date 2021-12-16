@@ -1,5 +1,5 @@
 //reads a csv file, gets all unique values from a target field, and fetches higher classification from GlobalNames and GBIF
-//if GlobalNames (which provides more comprehensive classification) failes, then falls back to GBIF
+//if GlobalNames (which provides more comprehensive classification) fails, then falls back to GBIF
 //assumes the first entry from GBIF has adequate higher classification
 //creates a new file with the taxon names only
 //remember to double check manually afterwards just in case any funny things crept in...

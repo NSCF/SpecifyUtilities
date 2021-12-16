@@ -4,12 +4,13 @@ import csv from 'fast-csv';
 import splitCollectors from "./splitCollectors.js";
 
 const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const csvFile = String.raw`NCAH-Type-collection-Specify-edited-ie_check.csv` //the full file path and name
+const csvFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection-13-05-2020-Specify-edited-ie_check.csv` //the full file path and name
 const collectorField = 'Collector edited'
 const institutionField = 'Collecting_institution'
 
 //NOTE WE CANNOT HAVE MIXED INSTITUTIONS AND PEOPLE IN THE COLLECTORS FIELD. THIS ASSUMES THAT IF THERE IS AN INSTITUTION, IT APPLIES TO ALL COLLECTORS
 
+//TODO: add the det by field also
 const records = []
 fs.createReadStream(path.join(csvPath, csvFile))
     .pipe(csv.parse({ headers: true }))
@@ -65,7 +66,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
       }
 
       //and write it out again
-      csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_collectorFieldsAdded.csv')), records, {headers:true})
+      csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_agentFieldsAdded.csv')), records, {headers:true})
       .on('error', err => console.error('error writing file:', err.message))
       .on('finish', () => console.log('All done!'));
 

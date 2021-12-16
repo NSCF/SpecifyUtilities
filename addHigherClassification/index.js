@@ -6,11 +6,11 @@ import * as path from 'path';
 import csv from 'fast-csv';
 
 const dataPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const dataFile = String.raw`NCAH-Type-collection-Specify-edited-ie_check_fieldsAdded.csv`
+const dataFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection-13-05-2020-Specify-edited-ie_check_agentFieldsAdded.csv`
 const taxonomyPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\taxonomy`
 const taxonomyFile = String.raw`NCAH-reconciled-classification-OpenRefine.csv`
 
-const dataTaxonField = 'PARGENUS_edited'
+const dataTaxonField = 'Parasite genus 1'
 
 const records = []
 const taxonomy = {}
@@ -88,7 +88,7 @@ fs.createReadStream(path.join(dataPath, dataFile))
         headers.splice(fieldIndex, 0, ...taxonomyHeaders)
 
         //write the results
-        const fileName = dataFile.replace(/\.csv$/, '_addedClassification.csv')
+        const fileName = dataFile.replace(/\.csv$/, '_classificationAdded.csv')
         csv.writeToPath(path.resolve(dataPath, fileName), records, {headers})
           .on('error', err => console.error(err))
           .on('finish', () => {
