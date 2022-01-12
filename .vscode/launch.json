@@ -106,6 +106,13 @@
       "name": "Test findMissingNames",
       "program": "${workspaceFolder}\\getMissingTaxa\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test updateHostTaxon",
+      "program": "${workspaceFolder}\\updateHostTaxon\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }

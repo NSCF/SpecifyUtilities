@@ -39,10 +39,9 @@ fs.createReadStream(path.join(dataPath, dataFile))
             process.exit()
           }
           else {
-            //trim strings, because the dataset may have been edited manually...
             for(const [key, val] of Object.entries(row)) {
               if(val && val.trim()) {
-                row[key] = val.trim()
+                row[key] = val.trim() //trim strings, because the dataset may have been edited manually...
               }
               else {
                 row[key] = null
@@ -62,7 +61,7 @@ fs.createReadStream(path.join(dataPath, dataFile))
             let taxonName = record[dataTaxonField]
             if(taxonName && taxonName.trim()) {
               taxonName = taxonName.trim().split(' ') //in case we have species names
-              taxonName = taxonName.shift()
+              taxonName = taxonName.shift() //get the first one
 
               if(taxonomy.hasOwnProperty(taxonName)) {
                 Object.assign(record, taxonomy[taxonName]) //the magic...
@@ -79,6 +78,7 @@ fs.createReadStream(path.join(dataPath, dataFile))
           console.log(Array.from(missingNames).join('|'))
         }
 
+        //splice the headers into the right location
         const headers = Object.keys(records[0])
         const firstTaxonomyKey = Object.keys(taxonomy)[0]
         const firstTaxonomy = taxonomy[firstTaxonomyKey]
@@ -86,6 +86,12 @@ fs.createReadStream(path.join(dataPath, dataFile))
 
         const fieldIndex = headers.indexOf(dataTaxonField)
         headers.splice(fieldIndex, 0, ...taxonomyHeaders)
+
+        //we also need to remove them from the end
+        const firstTaxonomyHeader = taxonomyHeaders[0]
+        const lastIndex = headers.lastIndexOf(firstTaxonomyHeader)
+        headers.splice(lastIndex)
+
 
         //write the results
         const fileName = dataFile.replace(/\.csv$/, '_classificationAdded.csv')

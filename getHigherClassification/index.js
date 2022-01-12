@@ -9,12 +9,13 @@ import * as path from 'path';
 import csv from 'fast-csv';
 import fetch from 'node-fetch';
 
-const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const csvFile = String.raw`NCAH-Type-collection-Specify-edited-ie_check_fieldsAdded.csv` //the full file path and name
-const targetField = 'PARGENUS_edited'
+const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\taxonomy`
+const csvFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection_HOSTS_ONLY.csv` //the full file path and name
+const targetField = 'taxonName'
 const restrictToRank = 'kingdom'
 const restrictToName = 'Animalia'
 const targetRanks = ['phylum', 'class', 'subclass', 'order', 'suborder', 'superfamily', 'family', 'subfamily'] //the ranks we want, note the rank we're searching on is added as 'name'
+const genusOnly = true //do we want just the genus part or the full name
 
 const names = {}
 fs.createReadStream(path.join(csvPath, csvFile))
@@ -28,11 +29,22 @@ fs.createReadStream(path.join(csvPath, csvFile))
         process.exit()
       }
 
-      //if we have species and subspecies we want to get the genera as well...
+      if(row[targetField] && row[targetField].trim()) { //only non null alues
+        let val = null
+        
+        if(genusOnly) {
+          val = row[targetField].trim().split(/\s+/)[0]
+        }
+        else {
+          val = row[targetField].trim()
+        }
 
-      if(!names.hasOwnProperty(row[targetField])){
-        names[row[targetField]] = true
+        if(!names.hasOwnProperty(val)){
+          names[val] = true
+        }
+
       }
+      
     })
     .on('end', async rowCount => {
       const uniqueNames = Object.keys(names)
