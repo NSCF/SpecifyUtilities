@@ -17,7 +17,9 @@ const sql = `select t.taxonid, t.fullname, t.Author from taxon t
 join taxontreedefitem tti on t.TaxonTreeDefItemID = tti.TaxonTreeDefItemID
 join taxontreedef ttd on t.TaxonTreeDefID = ttd.TaxonTreeDefID
 join discipline d on d.TaxonTreeDefID = ttd.TaxonTreeDefID
-where (tti.name = 'species' or tti.name = 'subspecies') and d.name = 'Invertebrate Zoology'`
+where (tti.name = 'species' or tti.name = 'subspecies') 
+and (trim(t.Author) = '' or t.Author is null)
+and d.name = 'Invertebrate Zoology'`
 
 conn.query(sql, (err, results, fields) => {
   if(err) {
@@ -26,10 +28,11 @@ conn.query(sql, (err, results, fields) => {
   }
 
   //else
-  const fileName = 'elm_malacology_taxa.csv'
+  const fileName = 'elm_malacology_taxa_noAuthors.csv'
   csv.writeToPath(fileName, results, {headers: true})
   .on('error', err => console.error(err))
   .on('finish', () => {
+    console.log(results.length, 'records written to file')
     console.log('All done...')
     process.exit()
   });
