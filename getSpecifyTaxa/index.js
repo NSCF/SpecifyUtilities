@@ -13,7 +13,7 @@ const conn = mysql.createConnection({
 
 //SCRIPT
 
-const sql = `select t.taxonid, t.fullname, t.Author, tti.name from taxon t
+const sql = `select t.taxonid, t.fullname, t.Author from taxon t
 join taxontreedefitem tti on t.TaxonTreeDefItemID = tti.TaxonTreeDefItemID
 join taxontreedef ttd on t.TaxonTreeDefID = ttd.TaxonTreeDefID
 join discipline d on d.TaxonTreeDefID = ttd.TaxonTreeDefID
