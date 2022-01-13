@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
 import fetch from 'node-fetch';
+import {fetchGBIFTaxon} from '../utils/getGBIFTaxon'
 
 const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\taxonomy`
 const csvFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection_HOSTS_ONLY.csv` //the full file path and name
@@ -192,21 +193,3 @@ fs.createReadStream(path.join(csvPath, csvFile))
     })
 
 
-const fetchGBIFTaxon = async (name, restrictToRank, restrictToName) => {
-  const url = `https://api.gbif.org/v1/species?name=${name}`
-  const response = await fetch(url)
-  const json = await response.json()
-  if(json.hasOwnProperty('results') && Array.isArray(json.results) && json.results.length){
-    const candidates = json.results.filter(x => x.hasOwnProperty(restrictToRank) && x[restrictToRank] == restrictToName)
-    if(candidates.length) {
-      const taxon = candidates[0]
-      return {name, taxon}
-    }
-    else {
-      return {name, taxon: null}
-    }
-  }
-  else {
-    return {name, taxon: null}
-  }
-}

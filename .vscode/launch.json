@@ -113,6 +113,13 @@
       "name": "Test updateHostTaxon",
       "program": "${workspaceFolder}\\updateHostTaxon\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test getTaxonAuthorities",
+      "program": "${workspaceFolder}\\getTaxonAuthorities\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }
