@@ -57,6 +57,62 @@
       "name": "filterDets",
       "program": "${workspaceFolder}\\getDWC\\scratchpad\\filterDets.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Specify API login",
+      "program": "${workspaceFolder}\\SpecifyTaxonAPI\\specifyLogin.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Specify Taxon API",
+      "program": "${workspaceFolder}\\SpecifyTaxonAPI\\index.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test map records",
+      "program": "${workspaceFolder}\\SvelteLabels\\src\\tests\\kznHerpsMapFuncTest.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test scratchpad",
+      "program": "${workspaceFolder}\\scratchpad.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test splitCollectors",
+      "program": "${workspaceFolder}\\splitCollectors\\index.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test getHigherClassification",
+      "program": "${workspaceFolder}\\getHigherClassification\\index.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test findMissingNames",
+      "program": "${workspaceFolder}\\getMissingTaxa\\index.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test updateHostTaxon",
+      "program": "${workspaceFolder}\\updateHostTaxon\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }

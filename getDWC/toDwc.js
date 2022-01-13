@@ -14,7 +14,7 @@ const {
 /**
  * Takes the resulting object from the Sequelize query on Specify and returns a flattened Darwin Core object
  * @param {Object} co A collectionObject instance with all associated models
- * @param {string} localityfields A string comma separated locality field names in the order that must be used to construct the locality string
+ * @param {string} localityfields A string of comma separated locality field names in the order that must be used to construct the locality string
  * @param {Boolean} includeNamespaces A flat for whether or not to include namespaces on the resulting fields
  */
 var transformToDwc = function(co, localityfields, includeNamespaces){
@@ -53,7 +53,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   //occurrence terms
   let catNum = co.catalogNumber || null
   if(catNum && typeof catNum == 'string'){
-    catNum = catNum.replace(/^0+/, '')
+    catNum = catNum.replace(/^0+/, '') //TODO remove these from the middle of stings, possibly as an option
   }
   dwc.catalogNumber = catNum //TODO how to build the catalog number for each collection; use .replace(/^0+/, '') to remove leading zeros
   if(co.altCatalogNumber && co.altCatalogNumber.trim()){
@@ -79,7 +79,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
     dwc.recordedBy = null
   }
 
-  //TODO Darwin Core doesn't include something for the number of specimens in a seriesr375yt
+  //TODO Darwin Core doesn't include something for the number of specimens in a series
   /*
   let qty = getOrganismQuantity(co)
   if(qty == 0) {
@@ -124,6 +124,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   dwc.identificationRemarks = null
 
   //dwc.scientificName
+  //TODO: 
   var currentDet = co.determinations.find(det => det.isCurrent) //we assume there is always a current det, but there may not be!
   if(currentDet) { 
     let name = typy(currentDet, 'dettaxon.fullName').safeObject || ""
@@ -336,7 +337,7 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   }
 
   if(maxElevation || minElevation){
-    if(maxElevation && minElevation){
+    if(maxElevation && minElevation){ //TODO handle cases they are equal and wrong way round
       max = maxElevation
       min = minElevation
     }
@@ -364,9 +365,9 @@ var transformToDwc = function(co, localityfields, includeNamespaces){
   else {
     if(verbatimElevation && verbatimElevation.trim() && /-?\d+/.test(verbatimElevation)){ 
       if(verbatimElevation.includes('+/-') || verbatimElevation.includes('+-')){//a range is indicated in the verbatim string
-        let elevParts = verbatimElevation.split('+/-')
+        let elevParts = verbatimElevation.split('±')
         if(elevParts.length == 1){
-          elevParts = verbatimElevation.split('+-')
+          elevParts = verbatimElevation.split('±')
         }
         verbatim = elevParts[0].match(/-?\d+/)[0] //it might be negative
         elevAccuracy = elevParts[1].match(/\d+/)[0]

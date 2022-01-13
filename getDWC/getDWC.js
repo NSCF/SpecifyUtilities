@@ -1,4 +1,4 @@
-const {t:typy} = require('typy') //for working with deeply nested models. See https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
+const {t:typy} = require('typy') //for working with deeply nested properties. See https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
 const { performance } = require('perf_hooks')
 const csv = require('fast-csv')
 const ms = require('pretty-ms');
@@ -38,7 +38,7 @@ async function getDWC({db, targetCollection, taxa, localityFields = null, remove
     'Ceratotherium simum', 'Diceros bicornis'
   ] //I've excluded Opistophthalmus ater here, and added the two baboon spiders and rhinos. 
 
-  //TODO use collectionobject.date1 for the embargo date, and then set where below to filter those out. - need a parameter for this in the function
+  //TODO use collectionobject.date1 for the embargo date, filter those out and report what % of records is being embargoed
 
   //add additional filters if provided (currently only taxa)
   if (taxa && Array.isArray(taxa) && taxa.length > 0) {
