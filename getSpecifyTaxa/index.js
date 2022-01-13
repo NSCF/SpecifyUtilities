@@ -6,7 +6,7 @@ import * as mysql from 'mysql'
 
 const conn = mysql.createConnection({
   host     : 'specify.saiab.ac.za',
-  user     : '1Little-Port!Elizabeth',
+  user     : 'elmuseumituser',
   password : '1Little-Port!Elizabeth',
   database : 'elmuseum'
 });
