@@ -11,9 +11,11 @@ var conn = mysql.createConnection({
 
 var sourceUser = 'ian'; //the user name
 var targetUsers = [
-  "fanele",
-  "nelisiwe",
-  "rethabile"
+  "tharina",
+  "mpho",
+  "lemmy",
+  "fortunate",
+  "annie"
 ];
 
 var copyQueries = [];
