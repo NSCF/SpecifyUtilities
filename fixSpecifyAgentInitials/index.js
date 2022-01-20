@@ -5,7 +5,7 @@ import * as mysql from 'mysql'
 import {makeMysqlQuery} from '../utils/makeMysqlQuery.js'
 
 const conn = mysql.createConnection({
-  host     : 'localhost',
+  host     : 'specify.saiab.ac.za',
   user     : 'elmuseumituser',
   password : '1Little-Port!Elizabeth',
   database : 'elmuseum'
