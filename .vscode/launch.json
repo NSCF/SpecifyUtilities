@@ -120,6 +120,13 @@
       "name": "Test getTaxonAuthorities",
       "program": "${workspaceFolder}\\getTaxonAuthorities\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test fixSpecifyAgentInitials",
+      "program": "${workspaceFolder}\\fixSpecifyAgentInitials\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }
