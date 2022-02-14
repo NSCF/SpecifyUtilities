@@ -127,6 +127,13 @@
       "name": "Test fixSpecifyAgentInitials",
       "program": "${workspaceFolder}\\fixSpecifyAgentInitials\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test updateCatalogNumbers",
+      "program": "${workspaceFolder}\\updateCatalogNumbers\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }
