@@ -1,21 +1,21 @@
 //updates for host taxon are not possible through the workbench, so we have to update afterwards
-//assumes that the taxonomy for the hosts is uploaded separately through thw workbench
+//assumes that the taxonomy for the hosts is uploaded separately through the workbench, but it does check
+//reads the original data files for the host taxon data, finds them in the taxon tree, then updates collectingobjectattribute, if it exists
 
-import * as util from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
 import * as mysql from 'mysql'
-import ProgressBar from 'progress'
 import {makeMysqlQuery} from '../utils/makeMysqlQuery.js'
+import onlyUnique from '../utils/onlyUnique.js'
 
 //SETTINGS
-const discipline = "Collections"
-const collection = "Parasitic helminths 2"
-const fileDirectory = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const fileName = String.raw`NCAH-recent-types-edited_ie_check_fieldsAdded_hostsChecked.csv`
-const catalogNumberField = 'NCAH  no.'
-const hostTaxonfield = 'Host_taxon_edited'
+const collectionName = "Parasitic helminths"
+const fileDirectory = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data\final edits`
+let fileName = String.raw`NCAH-RE7E06-2022-01-28 host taxon edited`
+const catalogNumberField = 'Specimen no.'
+const hostTaxonNameField = 'Host taxon updated'
+const verbatimTaxonField = 'Host species'
 const conn = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -32,10 +32,13 @@ if(!fileDirectory || !fileDirectory.trim() || !fileName || !fileName.trim()){
   process.exit()
 }
 
+const records = [] //the records from the dataset
 
-//READ THE DATASET
-const records = []
-const taxonomy = {}
+//add file extension if necessary
+if (!/\.csv$/i.test(fileName)) {
+  fileName = fileName += '.csv'
+}
+
 console.log('reading the dataset')
 fs.createReadStream(path.join(fileDirectory, fileName))
   .pipe(csv.parse({ headers: true }))
@@ -45,146 +48,160 @@ fs.createReadStream(path.join(fileDirectory, fileName))
     process.exit()
   })
   .on('data', row => {
+    //basic error checking for the first record
     if(!row.hasOwnProperty(catalogNumberField)) {
-      console.error('catalog number field', dataTaxonField,  'not found in dataset. Please check')
+      console.error('catalog number field', catalogNumberField,  'not found in dataset. Please check')
       process.exit()
     }
 
-    if(!row.hasOwnProperty(hostTaxonfield)) {
-      console.error('host taxon field', hostTaxonfield,  'not found in dataset. Please check')
+    if(!row.hasOwnProperty(hostTaxonNameField)) {
+      console.error('host taxon field', hostTaxonNameField,  'not found in dataset. Please check')
       process.exit()
     }
 
-    if(row[hostTaxonfield] && row[hostTaxonfield].trim()) { //only process records that have a host taxon
-      const taxon = row[hostTaxonfield].trim()
-      if(!taxonomy.hasOwnProperty(taxon)) {
-        taxonomy[taxon] = true
-      }
-      records.push(row)
+
+    const hostTaxon = row[hostTaxonNameField] && row[hostTaxonNameField].trim() ? row[hostTaxonNameField].trim() : null
+    const verbatimHostTaxon = row[verbatimTaxonField] && row[verbatimTaxonField].trim() ? row[verbatimTaxonField].trim() : null
+    if(hostTaxon || verbatimHostTaxon) {
+      records.push({
+        catalogNumber: row[catalogNumberField],
+        hostTaxon,
+        verbatimHostTaxon
+      })
     }
   })
   .on('end', async rowCount => {
-    console.log(rowCount, 'records read from dataset')
+    console.log(rowCount, 'records read from dataset with', records.length, 'having host taxon data')
     
-
     //first check all the taxon names are in the database
     conn.connect();
-    console.log('checking host taxa are in taxon tree...')
-    const hostTaxonNames = Object.keys(taxonomy)
-    const notInDB = []
-    const duplicates = []
-    let bar = new ProgressBar(':bar', {total: hostTaxonNames.length})
-    for (const name of hostTaxonNames) {
-      const sql = `select * from taxon t 
-        join taxontreedef ttd  on t.taxontreedefid = ttd.taxontreedefid
-        join discipline d on d.taxontreedefid = ttd.taxontreedefid
-        where t.fullName = '${name}' and d.name = '${discipline}'`
 
-      try {
-        const results = await query(sql)
-        bar.tick()
-        if(results.length == 0) {
-          notInDB.push(name)
-        }
-
-        if (results.length > 1) {
-          duplicates.push(name)
-        }
-
-        //save the results for later...
-        if(results.length == 1) {
-          taxonomy[name] = results[0]
-        }
+    //for the main dataset we need to exclude records with specific catalog numbers because they were duplicated!
+    const duplicatesSQL = `select altcatalognumber as altCatNum from collectionobject where catalognumber is null and altcatalognumber is not null`
+    let duplicatecatnums = null
+    try {
+      duplicatecatnums = await query(duplicatesSQL)
+      duplicatecatnums = duplicatecatnums.map(x => x.altCatNum).filter(onlyUnique)
+      let obj = {}
+      for(const catNum of duplicatecatnums){
+        obj[catNum] = true
       }
-      catch(err) {
-        console.error('error reading from database:', err.message)
-        console.log('exiting')
-        process.exit()
-      }
+      duplicatecatnums = obj
     }
-
-    if (notInDB.length) {
-      console.log('The following taxa are not in the taxon tree, please update them first:')
-      console.log(notInDB.join('|'))
-    }
-
-    if (duplicates.length) {
-      console.log('The following taxa are duplicated in the taxon tree, please fix them first:') 
-      console.log(duplicates.join('|'))
-    }
-
-    //check all the catalog numbers are in the db
-    console.log('checking records are in the database...')
-    const catNumsNotInDB = []
-    const catNumDuplicates = []
-
-    bar = new ProgressBar(':bar', {total: records.length})
-    for (const record of records) {
-      const catNum = record[catalogNumberField]
-      const sql = `select * from collectionobject co
-        join collection c on co.collectionid = c.collectionid
-        where co.catalognumber = '${catNum}' and c.collectionname = '${collection}'`
-
-      try {
-        const results = await query(sql)
-        bar.tick()
-        if(results.length == 0) {
-          catNumsNotInDB.push(catNum)
-        }
-        if(results.length > 1) {
-          catNumDuplicates.push(catNum)
-        }
-      }
-      catch(err) {
-        console.error('error reading database:', err.message)
-        console.log('exiting')
-        process.exit()
-      }
-    }
-
-    if (catNumsNotInDB.length) {
-      console.log('The following catalog numbers are not in the database, please fix:')
-      console.log(catNumsNotInDB.join('|'))
-    }
-
-    if (catNumDuplicates.length) {
-      console.log('The following catalog numbers are duplicated in the database, please fix them first:') 
-      console.log(catNumDuplicates.join('|'))
-    }
-
-    //stop here if there are any problems
-    if(notInDB.length || duplicates.length || catNumsNotInDB.length || catNumDuplicates.length){
+    catch(err) {
+      console.error('error reading duplicate catnums from database:', err.message)
       console.log('exiting...')
       process.exit()
     }
 
-    //here we can make the upates
-    console.log('updating database')
-    bar = new ProgressBar(':bar', {total: records.length})
+    const noTaxonMatches = []
+    const duplicateHostTaxa = []
+    let updates = 0
     for (const record of records) {
-      const taxonName = record[hostTaxonfield].trim()
-      const taxonID = taxonomy[taxonName].TaxonID
-      const catNum = record[catalogNumberField].trim()
 
-      const updateSql = `update collectingeventattribute cea
-        join collectingevent ce on cea.collectingeventattributeid = ce.collectingeventattributeid
+      //we don't want to process any where the catalog number is duplicated
+      if(duplicatecatnums.hasOwnProperty(record.catalogNumber)) {
+        continue;
+      }
+
+      let hostTaxonID = null
+      if(record.hostTaxon) {
+        const sql =`select taxonid as taxonID from taxon where fullname = '${record.hostTaxon}'`
+        let taxonrecords
+        try {
+          taxonrecords = await query(sql)
+        }
+        catch(err) {
+          console.error('error fetching taxon data:', err.message)
+          console.log('exiting...')
+          process.exit()
+        }
+        
+        if(taxonrecords.length > 0) {
+          if(taxonrecords.length > 1) { //there are duplicate host taxon names!
+            duplicateHostTaxa.push(record.hostTaxon)
+          }
+          else { //only one
+            hostTaxonID = taxonrecords[0].taxonID
+          }
+        }
+        else { //not found
+          noTaxonMatches.push(record.hostTaxon)
+        }
+      }
+
+      //do the update
+      //get the ce attributeID
+      const getceSQL = `select ce.collectingeventID as collectingEventID, ce.collectingeventattributeid as collectingEventAttributeID from collectingevent ce 
         join collectionobject co on co.collectingeventid = ce.collectingeventid
-        join collection c on c.collectionid = co.collectionid
-        set cea.hosttaxonid = ${taxonID}
-        where co.catalogNumber = '${catNum}' and c.collectionname = '${collection}'`
+        join collection c on co.collectionid = c.collectionid
+        where c.collectionname = '${collectionName}' and co.catalogNumber = '${record.catalogNumber}'`
 
+      let collectingEvents = null
       try {
-        const results = await query(updateSql)
-        bar.tick()
+        collectingEvents = await query(getceSQL)
       }
       catch(err) {
-        console.error('error updating database:', err.message)
+        console.error('error fetching collectingevents:', err.message)
         console.log('exiting...')
         process.exit()
       }
+
+      if(collectingEvents && collectingEvents.length > 0) {
+        if(collectingEvents.length == 1) { //it should be
+          const updatesql = `update collectingeventattribute 
+            set hosttaxonid = ${hostTaxonID}, text2 = ${record.verbatimHostTaxon? `'${record.verbatimHostTaxon}'` : null}
+            where collectingeventattributeid = ${collectingEvents[0].collectingEventAttributeID}`
+          try {
+            await query(updatesql)
+          }
+          catch(err) {
+            console.error('error updating database:', err.message)
+            console.log('exiting...')
+            process.exit()
+          }
+          
+          updates++
+        }
+        else {
+          console.error('got more than one collecting event for a specimen record!')
+          console.log('catalog number is', record.catalogNumber)
+          console.log('exiting...')
+          process.exit()
+        }
+      }
+      else {
+        console.error('no collecting event found for record', record.catalogNumber)
+      }
     }
 
-    conn.end()
-    console.log('all done, please check a few records to see if the updates where successfull')
+    if(updates) {
+      console.log(updates, 'host taxa updated in the db')
+    }
+    else {
+      console.log('no updates were made to the database')
+    }
+
+    if(noTaxonMatches.length) {
+      console.log('')
+      console.log('The following host taxa were not found in the db, please update them manually:')
+      console.log(Object.keys(noTaxonMatches).filter(onlyUnique).join(', '))
+    }
+
+    if(duplicateHostTaxa.length) {
+      console.log('')
+      console.log('The following host taxa are duplicated in the database, please merge the duplicates:')
+      console.log(duplicateHostTaxa.filter(onlyUnique).join(', '))
+    }
+
+    if(Object.keys(duplicatecatnums).length) {
+      console.log('')
+      console.log('Please do manual updates for the following duplicated records:')
+      console.log(Object.keys(duplicatecatnums).join(','))
+    }
+
+    console.log('all done!')
+
     process.exit()
+
   })

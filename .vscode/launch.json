@@ -134,6 +134,13 @@
       "name": "Test updateCatalogNumbers",
       "program": "${workspaceFolder}\\updateCatalogNumbers\\index.js",
       "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test splitCoordinates",
+      "program": "${workspaceFolder}\\splitCoordinates\\index.js",
+      "cwd": "${workspaceRoot}"
     }
   ]
 }

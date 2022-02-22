@@ -4,24 +4,23 @@ import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
 import * as mysql from 'mysql'
+import onlyUnique from '../utils/onlyUnique.js';
 
-const csvPath = String.raw`D:\NSCF Data WG\Current projects\Herp specimen digitization\HerpSpecimenData\Durban Herp Specimen Data`
-const csvFile = String.raw`DNSM_WB_taxon_upload1.csv`
+const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data\final edits`
+const csvFile = String.raw`NCAH-RE7E06-2022-01-28 host taxon edited.csv`
 
-const taxonNameField = 'name'
+const taxonNameField = 'Host taxon updated'
 
 const conn = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
   password : 'root',
-  database : 'dnsm'
+  database : 'specifyovr'
 });
 
-const specifyDiscipline = 'Herpetology'
+const specifyDiscipline = 'Collections'
 
-const missingNames = {}
-const namesPresent = {}
-const allNames = []
+let allNames = []
 fs.createReadStream(path.join(csvPath, csvFile))
   .pipe(csv.parse({ headers: true }))
   .on('error', error => console.error(error))
@@ -37,36 +36,35 @@ fs.createReadStream(path.join(csvPath, csvFile))
     }
   })
   .on('end', async rowCount => {
-    console.log('successfully read', rowCount, 'records from file, checking database...')
+    allNames = allNames.filter(onlyUnique)
+    console.log('successfully read', rowCount, 'records from file with ', allNames.length, ' unique names, checking database...')
 
+    const missingNames = []
+    const namesPresent = []
     for(const taxonName of allNames) {
 
-      if(!missingNames.hasOwnProperty(taxonName) && !namesPresent.hasOwnProperty(taxonName)) {
-        try {
-          const hasTaxonName = await checkNameInDatabase(conn, taxonName, specifyDiscipline)
-          if(hasTaxonName) {
-            namesPresent[taxonName] = true
-          }
-          else {
-            missingNames[taxonName] = true
-          }
+      try {
+        const hasTaxonName = await checkNameInDatabase(conn, taxonName, specifyDiscipline)
+        if(hasTaxonName) {
+          namesPresent.push(taxonName)
         }
-        catch(err) {
-          console.error('error calling database', err.message)
-          process.exit()
+        else {
+          missingNames.push(taxonName)
         }
+      }
+      catch(err) {
+        console.error('error calling database', err.message)
+        process.exit()
       }
     }
 
-    const namesInDB = Object.keys(namesPresent)
-    console.log(namesInDB.length, 'names already in the database')
+    console.log(namesPresent.length, 'names already in the database')
 
-    const namesToWrite = Object.keys(missingNames)
-    if(namesToWrite.length) {
-      console.log(namesToWrite.length, 'missing names')
+    if(missingNames.length) {
+      console.log(missingNames.length, 'missing names')
       console.log('writing to file...')
 
-      const output = namesToWrite.map(name => ({[taxonNameField]: name}))
+      const output = missingNames.map(name => ({[taxonNameField]: name}))
 
       csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_missingNames.csv')), output, {headers:true})
         .on('error', err => console.error('error writing file:', err.message))
@@ -84,14 +82,15 @@ fs.createReadStream(path.join(csvPath, csvFile))
  function checkNameInDatabase(conn, name, discipline) {
     return new Promise((resolve, reject) => {
       const sql = `select * from taxon t
-        join discipline d on d.taxontreedefID = t.taxontreedefID
-        where fullname = '${name}' and d.name = '${discipline}'`
-      conn.query(sql, function (error, results, fields) {
+        join taxontreedef ttd on t.taxontreedefid = ttd.taxontreedefid
+        join discipline d on d.taxontreedefID = ttd.taxontreedefID
+        where t.fullname = '${name}' and d.name = '${discipline}'`
+      conn.query(sql, (error, results, fields) => {
         if(error) {
           reject(error)
         }
         //else
-        if(results && results.length) {
+        if(results && results.length > 0) {
           resolve(true)
         }
         else {
