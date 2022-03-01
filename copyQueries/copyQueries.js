@@ -2,20 +2,61 @@ var mysql = require('mysql');
 var db = require('./copyQueryInterface')
 
 var conn = mysql.createConnection({
-  host     : 'specify.up.saiab.ac.za', //localhost
-  user     : 'upmaster', //needs the master username
-  password : 'Botanical3Gardens',
-  database : 'up'
+  host     : 'specify.saiab.ac.za', //localhost
+  user     : 'trainingituser', //needs the master username
+  password : 'eZ6oArrYcSj8TMAbFDra',
+  database : 'training'
 })
 
-
-var sourceUser = 'ian'; //the user name
+var sourceUser = 'Ian'; //the user name
 var targetUsers = [
-  "tharina",
-  "mpho",
-  "lemmy",
-  "fortunate",
-  "annie"
+  'romano',
+  'muhammad',
+  'thando',
+  'christian',
+  'simone',
+  'gimo',
+  'wiseman',
+  'Bianca',
+  'ina',
+  'natasha',
+  'derek',
+  'kerry',
+  'riana',
+  'eunice',
+  'fahimeh',
+  'Adriaan',
+  'lindiwe',
+  'given',
+  'ketelo',
+  'lihle',
+  'maxine',
+  'nelisiwe',
+  'mudzuli',
+  'aisha',
+  'nonkazimulo',
+  'khululwa',
+  'xavier',
+  'sifiso',
+  'khutso',
+  'sibusisiwe',
+  'atiyeh',
+  'theshnie',
+  'thembelihle',
+  'Sibu',
+  'nyaniso',
+  'ntombifikile',
+  'khulisile',
+  'alison',
+  'leigh',
+  'shandre',
+  'toufiek',
+  'nikisha',
+  'zinzi',
+  'christiaan',
+  'seeng',
+  'philip',
+  'victoria'
 ];
 
 var copyQueries = []; //the names of the queries to copy; will copy all if empty
