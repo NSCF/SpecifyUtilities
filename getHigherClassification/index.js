@@ -1,22 +1,23 @@
 //reads a csv file, gets all unique values from a target field, and fetches higher classification from GlobalNames and GBIF
 //if GlobalNames (which provides more comprehensive classification) fails, then falls back to GBIF
 //assumes the first entry from GBIF has adequate higher classification
-//creates a new file with the taxon names only
-//remember to double check manually afterwards just in case any funny things crept in...
+//creates a new file with the taxon names only --use addHigherTaxa to add these back to the original file
+//remember to double check manually afterwards (e.g. OpenRefine) just in case any funny things crept in...
+//note that the taxon name that was used for the search is added in column 'name'
 
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
 import fetch from 'node-fetch';
-import {fetchGBIFTaxon} from '../utils/getGBIFTaxon'
+import {fetchGBIFTaxon} from '../utils/getGBIFTaxon.js'
 
-const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\taxonomy`
-const csvFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection_HOSTS_ONLY.csv` //the full file path and name
-const targetField = 'taxonName'
+const csvPath = String.raw`D:\NSCF Data WG\Specify migration\ARC PHP\NCA`
+const csvFile = String.raw`NCA-taxa-20220615-OpenRefine_authorites-added.csv` //the full file path and name
+const targetField = 'FullName'
 const restrictToRank = 'kingdom'
 const restrictToName = 'Animalia'
-const targetRanks = ['phylum', 'class', 'subclass', 'order', 'suborder', 'superfamily', 'family', 'subfamily'] //the ranks we want, note the rank we're searching on is added as 'name'
-const genusOnly = true //do we want just the genus part or the full name
+const targetRanks = ['suborder', 'infraorder', 'superfamily', 'family', 'subfamily', 'subgenus'] //['phylum', 'class', 'subclass', 'order', 'suborder', 'superfamily', 'family', 'subfamily']
+const genusOnly = false //do we want just the genus part or the full name
 
 const names = {}
 fs.createReadStream(path.join(csvPath, csvFile))
@@ -186,8 +187,12 @@ fs.createReadStream(path.join(csvPath, csvFile))
         }
       }
 
-      console.log('saving to file...')
-      csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_higherClass.csv')), output, {headers:true})
+      console.log('saving', output.length, 'results to file...')
+      const newFileName = path.join(csvPath, csvFile.replace('.csv', '_higherClass.csv'))
+      const headers = Object.keys(output[0])
+      const last = headers.pop()
+      headers.unshift(last)
+      csv.writeToPath(newFileName, output, { headers })
       .on('error', err => console.error('error writing file:', err.message))
       .on('finish', () => console.log('All done!'));
     })

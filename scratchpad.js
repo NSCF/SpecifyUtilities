@@ -3,17 +3,20 @@
 const csv = require('fast-csv');
 const path = require('path')
 const mysql = require('mysql');
+
+const outFile = 'am aq inv catnums.csv'
+
 const connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
   password : 'root',
-  database : 'specify'
+  database : 'am'
 });
 
-const sql = `select co.catalogNumber, d.text1 as verbatimDet from collectionobject co
-join determination d on d.CollectionObjectID = co.CollectionObjectID
-join collection c on co.collectionid = c.collectionId
-where c.collectionname = 'Other Invertebrates'`
+const sql = `select cast(co.CatalogNumber as unsigned) from collectionobject co
+join collection c on co.collectionid = co.collectionId
+where c.collectionname = 'Aquatic Invertebrates' and cast(co.CatalogNumber as unsigned) >= 900000
+order by cast(co.CatalogNumber as unsigned)`
 
 const query = connection.query(sql);
 const results = []
@@ -30,7 +33,7 @@ query
   })
   .on('end', function() {
     console.log('writing csv file')
-    csv.writeToPath(path.resolve(__dirname, 'Ditsong Invertebrates verbatimDet backup.csv'), results, {headers: true})
+    csv.writeToPath(path.resolve(__dirname, outFile), results, {headers: true})
     .on('error', err => console.error(err))
     .on('finish', () => {
       console.log('All done!')
