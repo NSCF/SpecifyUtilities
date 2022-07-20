@@ -1,16 +1,17 @@
-//once you've fetched and checked higher classification, this will add it to the dataset
+//once you've fetched and checked higher classification, this will add it to the dataset (it joins the data)
 //it stops if any taxa in the dataset are not found in the higher classification
 
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
 
-const dataPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data`
-const dataFile = String.raw`Recapture-of-accession-data-NCAH-Historical-collection-13-05-2020-Specify-edited-ie_check_agentFieldsAdded.csv`
-const taxonomyPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\taxonomy`
-const taxonomyFile = String.raw`NCAH-reconciled-classification-OpenRefine.csv`
+const dataPath = String.raw`D:\NSCF Data WG\Specify migration\ARC PHP\NCA`
+const dataFile = String.raw`NCA-taxa-20220615-OpenRefine_authorites-added.csv`
+const taxonomyPath = dataPath //String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\taxonomy`
+const taxonomyFile = String.raw`NCA-taxa-20220615-OpenRefine_authorites-added_higherClass.csv`
 
-const dataTaxonField = 'Parasite genus 1'
+const dataTaxonField = 'FullName'
+const taxonomyTaxonField = 'name'
 
 const records = []
 const taxonomy = {}
@@ -31,10 +32,15 @@ fs.createReadStream(path.join(dataPath, dataFile))
       .pipe(csv.parse({ headers: true }))
       .on('error', error => console.error(error))
       .on('data', row => {
-        let genusName = row.genus
-        if(genusName && genusName.trim()) {
-          genusName = genusName.trim()
-          if(taxonomy.hasOwnProperty(genusName)) {
+
+        if(!row.hasOwnProperty(taxonomyTaxonField)) {
+          throw new Error('no', taxonomyTaxonField, 'in taxonomy dataset')
+        }
+
+        let targetTaxonName = row[taxonomyTaxonField]
+        if(targetTaxonName && targetTaxonName.trim()) {
+          targetTaxonName = targetTaxonName.trim()
+          if(taxonomy.hasOwnProperty(targetTaxonName)) {
             console.error('the taxonomy dataset contains duplicate genus names, please fix first')
             process.exit()
           }
@@ -47,7 +53,7 @@ fs.createReadStream(path.join(dataPath, dataFile))
                 row[key] = null
               }
             }
-            taxonomy[genusName] = row
+            taxonomy[targetTaxonName] = row
           }
         }
         
@@ -60,8 +66,7 @@ fs.createReadStream(path.join(dataPath, dataFile))
           if(record.hasOwnProperty(dataTaxonField)) {
             let taxonName = record[dataTaxonField]
             if(taxonName && taxonName.trim()) {
-              taxonName = taxonName.trim().split(' ') //in case we have species names
-              taxonName = taxonName.shift() //get the first one
+              taxonName = taxonName.trim()
 
               if(taxonomy.hasOwnProperty(taxonName)) {
                 Object.assign(record, taxonomy[taxonName]) //the magic...

@@ -4,7 +4,13 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test scratchpad2",
+      "program": "${workspaceFolder}\\scratchpad2.js",
+      "cwd": "${workspaceRoot}"
+    },
     {
       "type": "node",
       "request": "launch",
@@ -98,6 +104,13 @@
       "request": "launch",
       "name": "Test getHigherClassification",
       "program": "${workspaceFolder}\\getHigherClassification\\index.js",
+      "cwd": "${workspaceRoot}"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test addHigherClassification",
+      "program": "${workspaceFolder}\\addHigherClassification\\index.js",
       "cwd": "${workspaceRoot}"
     },
     {
