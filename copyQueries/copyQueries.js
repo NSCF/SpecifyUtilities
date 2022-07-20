@@ -10,35 +10,7 @@ var conn = mysql.createConnection({
 
 var sourceUser = 'Ian'; //the user name
 var targetUsers = [
-  'agnes',
-  'anja',
-  'ayanda',
-  'bonolo',
-  'bronwynne',
-  'cora',
-  'daksha',
-  'elize',
-  'emil',
-  'jarmaine',
-  'kaylee',
-  'londiwe',
-  'lonwabo',
-  'madimetsa',
-  'mulweli',
-  'nolu',
-  'nomcebo',
-  'pindiwe',
-  'precious',
-  'rangani',
-  'sibu2',
-  'sive',
-  'some',
-  'tasha',
-  'terence',
-  'thabo',
-  'vuyani',
-  'wilhelmina',
-  'zizile'  
+  'alpheus' 
 ];
 
 var copyQueries = []; //the names of the queries to copy; will copy all if empty
