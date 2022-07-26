@@ -10,7 +10,12 @@ var conn = mysql.createConnection({
 
 var sourceUser = 'Ian'; //the user name
 var targetUsers = [
-  'alpheus' 
+  'courtney',
+  'pumela',
+  'ncamisile',
+  'nqobile',
+  'keke',
+  'sanam'
 ];
 
 var copyQueries = []; //the names of the queries to copy; will copy all if empty
