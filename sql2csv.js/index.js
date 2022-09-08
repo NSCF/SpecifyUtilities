@@ -5,11 +5,12 @@ import { makeMysqlQuery } from '../utils/makeMysqlQuery.js'
 
 dotenv.config('../.env')
 
+//make sure to use env variables here 
 const conn = mysql.createConnection({
-  host     : 'localhost', //localhost
-  user     : 'root', //needs the master username
-  password : 'root',
-  database : 'unedited_specify'
+  host     : process.env.MYSQL_HOST, //localhost
+  user     : process.env.MYSQL_ADMIN, //needs the master username
+  password : process.env.MYSQL_ADMIN_PASSWORD,
+  database : process.env.SPECIFY_DB
 })
 
 const query = makeMysqlQuery(conn)
