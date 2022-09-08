@@ -2,3 +2,4 @@ node_modules
 SvelteLabels
 SpecifyTaxonAPI
 *.csv
+.env
