@@ -25,6 +25,7 @@ if (!collectionname || !eventCodeField) {
   process.exit()
 }
 
+console.log('fetching collecting events from', collectionname)
 const getCollectionEventCodesSQL = `SELECT DISTINCT ce.CollectingEventID as eventID, TRIM(ce.${eventCodeField}) AS code from collectingevent ce
 join collectionobject co on co.collectingeventID = ce.collectingEventID
 join collection c on co.collectionID = c.collectionID
@@ -35,6 +36,7 @@ let collectingevents = await query(getCollectionEventCodesSQL)
 
 if(collectingevents.length > 0) {
 
+  console.log(collectingevents.length, 'collecting events returned')
   //make the index
   const eventsIndex = {}
   for(const ce of collectingevents) {
@@ -46,6 +48,8 @@ if(collectingevents.length > 0) {
     }
   }
 
+  console.log('updating event codes...')
+  let updateCount = 0
   for (const [eventCode, eventIDs] of Object.entries(eventsIndex)){
 
     if(eventIDs.length > 1) { //we only want the unique ones...
@@ -60,10 +64,16 @@ if(collectingevents.length > 0) {
         const newEventCode = eventCode + '_' + appendices.pop()
         const updateCESQL = `UPDATE collectingevent SET ${eventCodeField} = '${newEventCode}' WHERE collectingEventID = ${eventID}`
         await query(updateCESQL)
+        updateCount++
       }
     }    
   }
+
+  console.log(updateCount, 'event codes updated')
+  console.log('add done...')
+  process.exit()
 }
 else {
   console.log('No collecting events for', collectionname)
+  process.exit()
 }
