@@ -62,7 +62,7 @@ if(collectingevents.length > 0) {
 
       for (const eventID of eventIDs) {
         const newEventCode = eventCode + '_' + appendices.pop()
-        const updateCESQL = `UPDATE collectingevent SET ${eventCodeField} = '${newEventCode}' WHERE collectingEventID = ${eventID}`
+        const updateCESQL = `UPDATE collectingevent SET ${eventCodeField} = ${mysql.escape(newEventCode)} WHERE collectingEventID = ${eventID}`
         await query(updateCESQL)
         updateCount++
       }
