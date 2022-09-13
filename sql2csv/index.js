@@ -1,3 +1,5 @@
+//run a sql statement, get the results, save to csv
+
 import mysql from 'mysql'
 import dotenv from 'dotenv'
 import csv from 'fast-csv'
@@ -15,6 +17,8 @@ const conn = mysql.createConnection({
 
 const query = makeMysqlQuery(conn)
 
+const outfilename = 'specify_geography.csv'
+
 const sql = `select p.name as parent, g.name, gtdi.name as type from geography g
 join geographytreedefitem gtdi on g.GeographyTreeDefItemID = gtdi.GeographyTreeDefItemID
 join geography p on g.ParentID = p.GeographyID`
@@ -23,7 +27,7 @@ console.log('reading database...')
 const results = await query(sql)
 
 console.log('writing csv...')
-csv.writeToPath('out.csv', results, {headers: true})
+csv.writeToPath(outfilename, results, {headers: true})
   .on('error', err => console.error(err))
   .on('finish', () => {
     console.log('All done...')
