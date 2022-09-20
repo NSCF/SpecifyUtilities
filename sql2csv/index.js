@@ -33,4 +33,3 @@ csv.writeToPath(outfilename, results, {headers: true})
     console.log('All done...')
     process.exit()
   });
-

@@ -70,7 +70,7 @@ if(collectingevents.length > 0) {
   }
 
   console.log(updateCount, 'event codes updated')
-  console.log('add done...')
+  console.log('all done...')
   process.exit()
 }
 else {
