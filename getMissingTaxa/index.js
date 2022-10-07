@@ -7,16 +7,23 @@ import * as mysql from 'mysql'
 import onlyUnique from '../utils/onlyUnique.js';
 
 const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data\final edits`
-const csvFile = String.raw`NCAH-RE7E06-2022-01-28 host taxon edited.csv`
+const csvFile = String.raw`NCAH-Secondary-collection-edited-20220805-OpenRefine-StorageUpdates-collectorsFieldsAdded-OpenRefine.csv`
 
-const taxonNameField = 'Host taxon updated'
+const taxonNameField = 'DetTaxon'
 
-const conn = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'root',
-  database : 'specifyovr'
-});
+let conn
+try {
+  conn = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : 'root',
+    database : 'specifyovr'
+  });
+}
+catch(err){
+  console.error(err)
+  process.exit()
+}
 
 const specifyDiscipline = 'Collections'
 
@@ -36,12 +43,12 @@ fs.createReadStream(path.join(csvPath, csvFile))
     }
   })
   .on('end', async rowCount => {
-    allNames = allNames.filter(onlyUnique)
-    console.log('successfully read', rowCount, 'records from file with ', allNames.length, ' unique names, checking database...')
+    let uniqueNames = allNames.filter(onlyUnique)
+    console.log('successfully read', rowCount, 'records from file with ', uniqueNames.length, ' unique names, checking database...')
 
     const missingNames = []
     const namesPresent = []
-    for(const taxonName of allNames) {
+    for(const taxonName of uniqueNames) {
 
       try {
         const hasTaxonName = await checkNameInDatabase(conn, taxonName, specifyDiscipline)
@@ -64,6 +71,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
       console.log(missingNames.length, 'missing names')
       console.log('writing to file...')
 
+      missingNames.sort()
       const output = missingNames.map(name => ({[taxonNameField]: name}))
 
       csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', '_missingNames.csv')), output, {headers:true})
@@ -79,23 +87,45 @@ fs.createReadStream(path.join(csvPath, csvFile))
     }    
   })
 
- function checkNameInDatabase(conn, name, discipline) {
-    return new Promise((resolve, reject) => {
-      const sql = `select * from taxon t
-        join taxontreedef ttd on t.taxontreedefid = ttd.taxontreedefid
-        join discipline d on d.taxontreedefID = ttd.taxontreedefID
-        where t.fullname = '${name}' and d.name = '${discipline}'`
-      conn.query(sql, (error, results, fields) => {
-        if(error) {
-          reject(error)
-        }
-        //else
-        if(results && results.length > 0) {
-          resolve(true)
-        }
-        else {
-          resolve(false)
-        }
-      })
-    })
+async function checkNameInDatabase(conn, name, discipline) {
+  
+  const nameParts = name.split(/\s+/)
+
+  while (nameParts.length > 0) {
+    let searchName = nameParts.join(' ')
+    let found = await getNameFromDatabase(conn, searchName, discipline)
+    
+    if (found) {
+      return true
+    }
+    else {
+      nameParts.pop()
+    }
   }
+
+  //if we get here we haven't found the name...
+  return false
+
+}
+
+function getNameFromDatabase (conn, searchName, discipline) {
+  return new Promise((resolve, reject) => {
+    const sql = `select * from taxon t
+    join taxontreedef ttd on t.taxontreedefid = ttd.taxontreedefid
+    join discipline d on d.taxontreedefID = ttd.taxontreedefID
+    where t.fullname = '${searchName}' and d.name = '${discipline}'`
+
+    conn.query(sql, (error, results, fields) => {
+      if(error) {
+        reject(error)
+      }
+      //else
+      if(results && results.length > 0) {
+        resolve(true)
+      }
+      else {
+        resolve(false)
+      }
+    })
+  })
+}

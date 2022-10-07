@@ -8,16 +8,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
-import fetch from 'node-fetch';
-import {fetchGBIFTaxon} from '../utils/getGBIFTaxon.js'
 
-const csvPath = String.raw`D:\NSCF Data WG\Specify migration\ARC PHP\NCA`
-const csvFile = String.raw`NCA-taxa-20220615-OpenRefine_authorites-added.csv` //the full file path and name
-const targetField = 'FullName'
+import { getGlobalNamesTaxa, fetchGBIFTaxon } from '../utils/taxonNameServices.js'
+
+const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data\final edits`
+const csvFile = String.raw`NCAH-Secondary-collection-edited-20220805-OpenRefine-StorageUpdates-collectorsFieldsAdded-OpenRefine_missingNames.csv` //the full file path and name
+const targetField = 'DetTaxon'
 const restrictToRank = 'kingdom'
-const restrictToName = 'Animalia'
-const targetRanks = ['suborder', 'infraorder', 'superfamily', 'family', 'subfamily', 'subgenus'] //['phylum', 'class', 'subclass', 'order', 'suborder', 'superfamily', 'family', 'subfamily']
-const genusOnly = false //do we want just the genus part or the full name
+const restrictToNames = ['Animalia', 'Metazoa']
+const targetRanks = ['class', 'order', 'suborder', 'infraorder', 'superfamily', 'family', 'subfamily'] //['phylum', 'class', 'subclass', 'order', 'suborder', 'superfamily', 'family', 'subfamily']
+const genusOnly = true //do we want just the genus part or the full name
 
 const names = {}
 fs.createReadStream(path.join(csvPath, csvFile))
@@ -58,97 +58,20 @@ fs.createReadStream(path.join(csvPath, csvFile))
 
       console.log('successfully read', rowCount, 'records with ', uniqueNames.length, 'unique names')
 
-
       //try globalnames first
       console.log('fetching data from GlobalNames')
 
-      let namesFound = 0
-      let notFound = [] //for nothing returned and those with no classification
-      
+      let { output, notFound } = await getGlobalNamesTaxa(uniqueNames, targetRanks, restrictToRank, restrictToNames)
 
-      const url = `https://verifier.globalnames.org/api/v1/verifications`
-      const callBody = {
-        nameStrings: uniqueNames,
-        preferredSources: [1],
-        withAllMatches: false,
-        withCapitalization: false
-      }
-      
-      let response
-      try {
-        response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(callBody)
-        })
-      }
-      catch(err) {
-        console.error('error calling globalnames:', err.message)
-        process.exit()
-      }
-       
-      let results
-      try {
-        results = await response.json() // this is an array
-      }
-      catch(err) {
-        console.error('error parsing json:', err.message)
-        process.exit()
-      }
-
-      const output = []
-      for (const result of results) {
-        if(result.bestResult) {
-          if(result.bestResult.classificationRanks && result.bestResult.classificationPath){
-            const ranks = result.bestResult.classificationRanks.split('|')
-            const names = result.bestResult.classificationPath.split('|')
-
-            //make a classification object
-            const classification = {}
-            while(ranks.length && names.length) {
-              const rank = ranks.pop()
-              const name = names.pop()
-              classification[rank.toLowerCase()] = name
-            }
-
-            if(classification[restrictToRank] && classification[restrictToRank] == restrictToName){
-              
-              const outputObj = {}
-              
-              for (const targetRank of targetRanks) {
-                outputObj[targetRank] = classification[targetRank] || null
-              }
-
-              outputObj.name= result.input
-
-              output.push(outputObj)
-              namesFound++
-
-            }
-            else {
-              notFound.push(result.input)
-            }
-          }
-          else{
-            notFound.push(result.input)
-          }
-        }
-        else {
-          notFound.push(result.input)
-        }
-      }
-
-      console.log('Found matches for', namesFound, 'names in GlobalNames')
+      console.log('Found matches for', output.length, 'names in GlobalNames')
 
       if(notFound.length){
         console.log('No matches for', notFound.length, 'names, attempting GBIF...')
-        namesFound = 0
+        let namesFound = 0
 
         let proms = []
         for (const name of notFound) {
-          proms.push(fetchGBIFTaxon(name, restrictToRank, restrictToName))
+          proms.push(fetchGBIFTaxon(name, restrictToRank, restrictToNames))
         }
 
         let gbifResults = await Promise.all(proms)
@@ -163,7 +86,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
             }
 
             if(outputObj[targetRanks[0]]) {
-              outputObj.name= result.name
+              outputObj.name = result.name
               output.push(outputObj)
               namesFound++
             }
@@ -190,8 +113,6 @@ fs.createReadStream(path.join(csvPath, csvFile))
       console.log('saving', output.length, 'results to file...')
       const newFileName = path.join(csvPath, csvFile.replace('.csv', '_higherClass.csv'))
       const headers = Object.keys(output[0])
-      const last = headers.pop()
-      headers.unshift(last)
       csv.writeToPath(newFileName, output, { headers })
       .on('error', err => console.error('error writing file:', err.message))
       .on('finish', () => console.log('All done!'));
