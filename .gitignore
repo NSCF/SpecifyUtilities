@@ -3,3 +3,4 @@ SvelteLabels
 SpecifyTaxonAPI
 *.csv
 .env
+getDWC/dbconfigs.js 

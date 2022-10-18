@@ -29,6 +29,7 @@ async function getDWC({db, targetCollection, taxa, localityFields = null, remove
   let findConfig = getConfig(models, targetCollection)
 
   //lets not rely on taxon names being flagged as NSSL. Rather provide a specific list of NSSL names
+  //TODO get this from the NSSL API if that ever exists...
   let nssl = [
     'Psammobates geometricus', 'Smaug giganteus', 'Bradypodion caeruleogula', 'Ouroborus cataphractus', 'Ceratogyrus paulseni',
     'Homopus signatus', 'Acinonyx jubatus', 'Bitis albanica', 'Bradypodion caffer', 'Bradypodion pumilum', 'Bradypodion thamnobates',
