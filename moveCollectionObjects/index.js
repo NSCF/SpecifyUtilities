@@ -1,8 +1,11 @@
 //moves collection objects from one collection to another, within a single discipline (like after an accidental workbench upload)
 
+import * as dotenv from 'dotenv'
 import * as mysql from 'mysql'
 import cliProgress from 'cli-progress'
 import {makeMysqlQuery} from '../utils/makeMysqlQuery.js'
+
+dotenv.config()
 
 const sourceCollectionName = 'terrestrial invertebrates'
 const destCollectionName = 'aquatic invertebrates'
@@ -10,10 +13,10 @@ const lowerCatNum = '200000'
 const upperCatNum = null
 
 const conn = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'root',
-  database : 'am'
+  host     : process.env.MYSQL_HOST,
+  user     : process.env.MYSQL_ADMIN,
+  password : process.env.MYSQL_ADMIN_PASSWORD,
+  database : process.env.SPECIFY_DB
 });
 
 const query = makeMysqlQuery(conn)
