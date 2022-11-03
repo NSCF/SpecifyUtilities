@@ -11,7 +11,9 @@ const recordIdentifierField = 'NCAH no.'
 const latitudeField = 'VerbatimLat'
 const longitudeField = 'VerbatimLong'
 const coordsField = null
+const addDecimalCoordsFields = true
 
+const records = []
 const errorRecords = []
 let missingIdentifiers = 0
 fs.createReadStream(path.join(csvPath, csvFile))
@@ -42,6 +44,12 @@ fs.createReadStream(path.join(csvPath, csvFile))
         return
       }
 
+      if (addDecimalCoordsFields) {
+        row.decimalLatitude = null
+        row.decimalLongitude = null
+        records.push(row)
+      }
+
       if (!row.hasOwnProperty(coordsField)) {
         
         const coords = [row[latitudeField], row[longitudeField]].filter(x => x).map(x => x.trim()).filter(x => x) //remove blanks, should be two values or none...
@@ -56,7 +64,9 @@ fs.createReadStream(path.join(csvPath, csvFile))
         }
 
         try {
-          convert(coords.join(' '))
+          const converted = convert(coords.join(' '))
+          row.decimalLatitude = converted.decimalLatitude
+          row.decimalLongitude = converted.decimalLongitude
         }
         catch(err) {
           errorRecords.push(identifier) //they didn't convert, they need to be checked
@@ -83,7 +93,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
       console.log('Parsed', rowCount, 'from file')
 
       if(missingIdentifiers == 1) {
-        console.log('One record has no identifier value, the coordinates were not checked...')
+        console.log('One record has no identifier value, its coordinates were not checked...')
       }
 
       if(missingIdentifiers > 1) {
@@ -96,6 +106,19 @@ fs.createReadStream(path.join(csvPath, csvFile))
         console.log(errorRecords.join('|'))
       }
 
-      console.log('all done...')
-
+      if (addDecimalCoordsFields) {
+        console.log('writing out new file...')
+        const fileName = csvFile.replace(/\.csv$/, '_coordsAdded.csv')
+        csv.writeToPath(path.resolve(csvPath, fileName), records, {headers: true})
+          .on('error', err => console.error(err))
+          .on('finish', () => {
+            console.log('File with decimal coords written to disc')
+            console.log('all done...')
+            process.exit()
+          });
+      }
+      else {
+        console.log('all done...')
+        process.exit()
+      }
     });

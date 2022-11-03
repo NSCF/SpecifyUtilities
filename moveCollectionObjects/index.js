@@ -21,7 +21,6 @@ const conn = mysql.createConnection({
 
 const query = makeMysqlQuery(conn)
 
-
 //get the collection details
 const getSourceCollectionSQL = `SELECT * FROM collection WHERE collectionname = '${sourceCollectionName}'`
 const sourceCollections = await query(getSourceCollectionSQL)
@@ -33,6 +32,7 @@ if (sourceCollections.length > 1) {
   console.log('there is more than one collection called', sourceCollectionName)
   process.exit()
 }
+
 const sourceCollection = sourceCollections[0]
 
 const getDestCollectionSQL = `SELECT * FROM collection WHERE collectionname = '${destCollectionName}'`
@@ -75,8 +75,6 @@ for (const record of prepTypeRecords) {
     destPrepTypes[name] = prepTypeID
   }
 }
-
-
 
 //get the collection objects to move...
 let getCollectionObjectSQL = `SELECT * FROM collectionobject co
