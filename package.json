@@ -22,7 +22,7 @@
     "node-fetch": "^3.1.0",
     "pretty-ms": "^5.0.0",
     "progress": "^2.0.3",
-    "sequelize": "^5.15.1",
+    "sequelize": "^5.22.5",
     "typy": "^3.3.0"
   }
 }
