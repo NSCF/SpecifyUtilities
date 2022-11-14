@@ -19,7 +19,12 @@ export const fetchGBIFTaxon = async (name, restrictToRank, restrictToNames) => {
   }
 }
 
-export const getGlobalNamesTaxa = async (names, targetRanks, restrictToRank, restrictToNames) => {
+/**
+ * 
+ * @param {*} names A list of taxon names
+ * @returns Object with taxon names as keys and results as object values
+ */
+export const getGlobalNamesTaxa = async (names) => {
   const url = `https://verifier.globalnames.org/api/v1/verifications`
       
   const callBody = {
@@ -40,8 +45,7 @@ export const getGlobalNamesTaxa = async (names, targetRanks, restrictToRank, res
     })
   }
   catch(err) {
-    console.error('error calling globalnames:', err.message)
-    process.exit()
+    throw err
   }
     
   let results
@@ -49,53 +53,84 @@ export const getGlobalNamesTaxa = async (names, targetRanks, restrictToRank, res
     results = await response.json() // this is an array
   }
   catch(err) {
-    console.error('error parsing json:', err.message)
-    process.exit()
+    throw err
   }
 
-  const output = []
-  const notFound = []
-  for (const result of results.names) {
-    if(result.bestResult) {
-      if(result.bestResult.classificationRanks && result.bestResult.classificationPath){
-        const ranks = result.bestResult.classificationRanks.split('|')
-        const names = result.bestResult.classificationPath.split('|')
+  const result = {}
 
-        //make a classification object
-        const classification = {}
-        while(ranks.length && names.length) {
-          const rank = ranks.pop()
-          const name = names.pop()
-          classification[rank.toLowerCase()] = name
-        }
-
-        if(classification[restrictToRank] && restrictToNames.includes(classification[restrictToRank])){
-          
-          const outputObj = {}
-          
-          for (const targetRank of targetRanks) {
-            outputObj[targetRank] = classification[targetRank] || null
-          }
-
-          outputObj.name= result.name
-
-          output.push(outputObj)
-        }
-        else {
-          notFound.push(result.name)
-        }
-      }
-      else{
-        notFound.push(result.name)
-      }
-    }
-    else {
-      notFound.push(result.name)
-    }
+  for (const nameResults of results.names) { //horrible naming here
+    result[nameResults.name] = nameResults.bestResult
   }
 
-  return {
-    output, 
-    notFound
-  }
+  return result
+
 }
+
+  // const output = []
+  // const notFound = []
+  // const similar = {}
+  // for (const result of results.names) {
+  //   if(result.bestResult) {
+      
+  //     if (result.bestResult.matchedCanonicalSimple != result.name) { //globalnames uses fuzzy matches
+  //       similar[result.name] = result.bestResult.matchedCanonicalSimple
+  //       continue
+  //     }
+
+  //     const outputObj = {}
+  //     outputObj.name= result.name
+      
+  //     if(addAuthority) {
+  //       outputObj.globalnamesAuthority = null
+  //       // globalnames doesn't give the authority in it's own field(!!!), so we have to extract it
+  //       const nameLastPart = result.name.split(' ').filter(x => x).pop()
+  //       const matchedNameParts = result.bestResult.matchedName.split(' ').filter(x => x)
+  //       const indexOfLastNamePart = matchedNameParts.indexOf(nameLastPart)
+  //       if (indexOfLastNamePart >= 0 && matchedNameParts.length > indexOfLastNamePart) {
+  //         outputObj.globalnamesAuthority = matchedNameParts.slice(indexOfLastNamePart + 1).join(' ')
+  //       }
+  //     }
+
+  //     if(addCurrentName){
+  //       outputObj.globalnamesAcceptedName = rest.bestResult.acceptedName
+  //     }
+
+
+  //     if(targetRanks){
+  //       if(result.bestResult.classificationRanks && result.bestResult.classificationPath){
+  //         const ranks = result.bestResult.classificationRanks.split('|')
+  //         const names = result.bestResult.classificationPath.split('|')
+  
+  //         //make a classification object
+  //         const classification = {}
+  //         while(ranks.length && names.length) {
+  //           const rank = ranks.pop()
+  //           const name = names.pop()
+  //           classification[rank.toLowerCase()] = name
+  //         }
+  
+  //         if(classification[restrictToRank] && restrictToNames.includes(classification[restrictToRank])){
+            
+  //           for (const targetRank of targetRanks) {
+  //             outputObj[targetRank] = classification[targetRank] || null
+  //           }
+  
+  //           output.push(outputObj)
+
+  //         }
+  //         else {
+  //           notFound.push(result.name)
+  //         }
+  //       }
+  //       else{
+  //         notFound.push(result.name)
+  //       }
+  //     }
+  //     else {
+  //       output.push(outputObj)
+  //     }
+  //   }
+  //   else {
+  //     notFound.push(result.name)
+  //   }
+  // }
