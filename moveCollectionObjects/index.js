@@ -7,6 +7,7 @@ import {makeMysqlQuery} from '../utils/makeMysqlQuery.js'
 
 dotenv.config()
 
+const database = 'elmuseum'
 const sourceCollectionName = 'terrestrial invertebrates'
 const destCollectionName = 'aquatic invertebrates'
 const lowerCatNum = '200000'
@@ -16,7 +17,7 @@ const conn = mysql.createConnection({
   host     : process.env.MYSQL_HOST,
   user     : process.env.MYSQL_ADMIN,
   password : process.env.MYSQL_ADMIN_PASSWORD,
-  database : process.env.SPECIFY_DB
+  database
 });
 
 const query = makeMysqlQuery(conn)
