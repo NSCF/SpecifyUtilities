@@ -6,20 +6,23 @@ import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'fast-csv';
 import * as mysql from 'mysql'
+import dotenv from 'dotenv'
 import {makeMysqlQuery} from '../utils/makeMysqlQuery.js'
 import onlyUnique from '../utils/onlyUnique.js'
+
+dotenv.config()
 
 //SETTINGS
 const collectionName = "Parasitic helminths"
 const fileDirectory = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data\final edits`
-let fileName = String.raw`NCAH-RE7E06-2022-01-28 host taxon edited`
-const catalogNumberField = 'Specimen no.'
-const hostTaxonNameField = 'Host taxon updated'
-const verbatimTaxonField = 'Host species'
+let fileName = String.raw`NCAH-Secondary-collection-edited-20220805-OpenRefine-StorageUpdates-collectorsFieldsAdded-OpenRefine_coordsAdded.csv`
+const catalogNumberField = 'NCAH no.'
+const hostTaxonNameField = 'Host species'
+const verbatimTaxonField = null
 const conn = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'root',
+  host     : process.env.MYSQL_HOST,
+  user     : process.env.MYSQL_ADMIN,
+  password : process.env.MYSQL_ADMIN_PASSWORD,
   database : 'specifyovr'
 });
 
@@ -149,9 +152,9 @@ fs.createReadStream(path.join(fileDirectory, fileName))
 
       if(collectingEvents && collectingEvents.length > 0) {
         if(collectingEvents.length == 1) { //it should be
-          const updatesql = `update collectingeventattribute 
-            set hosttaxonid = ${hostTaxonID}, text2 = ${record.verbatimHostTaxon? `'${record.verbatimHostTaxon}'` : null}
-            where collectingeventattributeid = ${collectingEvents[0].collectingEventAttributeID}`
+          let updatesql = `update collectingeventattribute set hosttaxonid = ${hostTaxonID}, text2 = null
+          where collectingeventattributeid = ${collectingEvents[0].collectingEventAttributeID}`
+
           try {
             await query(updatesql)
           }
@@ -185,19 +188,13 @@ fs.createReadStream(path.join(fileDirectory, fileName))
     if(noTaxonMatches.length) {
       console.log('')
       console.log('The following host taxa were not found in the db, please update them manually:')
-      console.log(Object.keys(noTaxonMatches).filter(onlyUnique).join(', '))
+      console.log(noTaxonMatches.filter(onlyUnique).join(', '))
     }
 
     if(duplicateHostTaxa.length) {
       console.log('')
       console.log('The following host taxa are duplicated in the database, please merge the duplicates:')
       console.log(duplicateHostTaxa.filter(onlyUnique).join(', '))
-    }
-
-    if(Object.keys(duplicatecatnums).length) {
-      console.log('')
-      console.log('Please do manual updates for the following duplicated records:')
-      console.log(Object.keys(duplicatecatnums).join(','))
     }
 
     console.log('all done!')
