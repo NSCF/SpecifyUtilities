@@ -70,6 +70,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
         }
         catch(err) {
           errorRecords.push(identifier) //they didn't convert, they need to be checked
+          row.decimalLatitude = 'Error'
           return
         }
       }
@@ -78,9 +79,12 @@ fs.createReadStream(path.join(csvPath, csvFile))
         if( coords != null && coords.trim() != ''){ //we have coords
           try {
             convert(coords.join(' '))
+            row.decimalLatitude = converted.decimalLatitude
+            row.decimalLongitude = converted.decimalLongitude
           }
           catch {
             errorRecords.push(identifier) //they didn't convert, they need to be checked
+            row.decimalLatitude = 'Error'
             return
           }
         }
