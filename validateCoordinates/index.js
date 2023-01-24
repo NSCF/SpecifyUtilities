@@ -101,9 +101,14 @@ fs.createReadStream(path.join(csvPath, csvFile))
       }
 
       if(errorRecords.length > 0) {
-        errorRecords.sort()
-        console.log('There are errors with the coordinates in the following records:')
-        console.log(errorRecords.join('|'))
+        if(errorRecords.length > 20) {
+          console.log('There we errors with', errorRecords.length, 'records, see the output file')
+        }
+        else {
+          errorRecords.sort()
+          console.log('There are errors with the coordinates in the following records:')
+          console.log(errorRecords.join('|'))
+        }
       }
 
       if (addDecimalCoordsFields) {
