@@ -9,12 +9,12 @@ dotenv.config('../.env')
 
 const database = 'elmuseum'
 
-const csvPath = String.raw`D:\NSCF Data WG\Specify management\elmuseum`
-const csvFile = String.raw`elm-malacology-eventcodes-withdetails-sept2022-OpenRefine.csv`
+const csvPath = String.raw`C:\Users\engelbrechti\Downloads`
+const csvFile = String.raw`elm-malacology-eventcodes-withdetails-sept2022-OpenRefine V2.csv`
 
 const collectingEventIDField = 'collectingeventid'
-const eventCodeField = 'StationFieldNumber'
-const specifyEventCodeField = eventCodeField
+const eventCodeField = 'eventCode'
+const specifyEventCodeField = 'StationFieldNumber'
 
 //SCRIPT
 
@@ -34,7 +34,15 @@ if (!collectingEventIDField || !eventCodeField || !specifyEventCodeField) {
 }
 
 console.log('reading data file')
-const records = await readCSV(csvPath, csvFile)
+let records
+try {
+  records = await readCSV(csvPath, csvFile)
+}
+catch(err) {
+  console.error('error reading file:', err.message)
+  process.exit()
+}
+
 
 console.log('updating database...')
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
@@ -75,8 +83,6 @@ conn.beginTransaction(async err => {
   
     recordCounter++
     bar.update(recordCounter)
-  
-  
   }
   
   bar.stop()
