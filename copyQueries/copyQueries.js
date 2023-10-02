@@ -1,5 +1,5 @@
-var mysql = require('mysql');
-var db = require('./copyQueryInterface')
+import mysql from 'mysql'
+import db from './copyQueryInterface.js'
 
 var conn = mysql.createConnection({
   host     : 'specify.saiab.ac.za', //localhost

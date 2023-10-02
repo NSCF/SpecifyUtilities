@@ -1,7 +1,4 @@
 
-const {promisify} = require("es6-promisify");
-
-
 function getSpecifyUserByName(conn, name){
   return new Promise((resolve, reject) => {
     conn.query(`select * from specifyuser where trim(name) = '${name.trim()}'`, (err, res) => {
@@ -157,7 +154,7 @@ function close(conn){
   })
 }
 
-module.exports = {
+export default {
   getSpecifyUserByName,
   getSpQueriesForUser,
   getSpQueryFields,
