@@ -1,0 +1,4 @@
+Just some notes about how these trees work. 
+
+For a leaf insert you just need to update highestChildNodeNumber for the line from the leaf to the root, nothing else changes.
+For everything else (merges, subtree additions, deletions, etc) everything has to be recalculated.
