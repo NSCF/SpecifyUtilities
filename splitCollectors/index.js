@@ -3,15 +3,16 @@ import * as path from 'path';
 import csv from 'fast-csv';
 import splitCollectors from "./splitCollectors.js";
 
-const csvPath = String.raw`D:\NSCF Data WG\Current projects\Specify migration\ARC Specify migration\ARC specimen data for Specify migration\OVR\Helminths\edited data\final edits`
-const csvFile = String.raw`NCAH-Secondary-collection-edited-20220805-OpenRefine-StorageUpdates.csv` //the full file path and name
+const csvPath = String.raw`D:\NSCF Data WG\Specify migration\ARC PHP\NCA\SPECIFY\DATA`
+const csvFile = String.raw`NCA-data-export-20220901_OpenRefine_ie-edits20240313_coll1234Added.csv`
 const collectorsOrDeterminer = 'collectors' //are we splitting collectors for det by, used only to name the output file
-const agentField = 'Collector'
-const institutionField = 'Collecting_institution'
+const agentField = 'Collector 5'
+const institutionField = null
 
 //NOTE WE CANNOT HAVE MIXED INSTITUTIONS AND PEOPLE IN THE COLLECTORS FIELD. THIS ASSUMES THAT IF THERE IS AN INSTITUTION, IT APPLIES TO ALL COLLECTORS
 
 const records = []
+console.log('reading file...')
 fs.createReadStream(path.join(csvPath, csvFile))
     .pipe(csv.parse({ headers: true }))
     .on('error', error => console.error(error))
@@ -43,7 +44,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
       records.push(row)
     })
     .on('end', rowCount => {
-      console.log(`Parsed ${rowCount} rows from file`)
+      console.log(`read ${rowCount} rows`)
       const collectorCounts = records.map(x => x.collectorsArray.length) 
       const maxCollectorCount = Math.max.apply(null, collectorCounts);
 
@@ -66,6 +67,7 @@ fs.createReadStream(path.join(csvPath, csvFile))
       }
 
       //and write it out again
+      console.log('writing new file...')
       csv.writeToPath(path.join(csvPath, csvFile.replace('.csv', `_${collectorsOrDeterminer}FieldsAdded.csv`)), records, {headers:true})
       .on('error', err => console.error('error writing file:', err.message))
       .on('finish', () => console.log('All done!'));

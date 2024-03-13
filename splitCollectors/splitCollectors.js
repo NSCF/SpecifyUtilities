@@ -29,6 +29,7 @@ function makeCollectorObject(collector) {
     '^Mr\\.?\\s+',
     '^Mnr\\.?\\s+',
     '^Ms\\.?\\s+',
+    '^Miss\\.?\\s+',
     '^Mrs\\.?\\s+',
     '^Prof\\.?\\s+',
     '^Mev\\.?\\s+',
@@ -91,17 +92,18 @@ function makeCollectorObject(collector) {
   }
   else {
     if(collector.includes(' ')) {
-      if(/^[A-Z\.]+\s+/.test(collector)) { //capitals followed by a space, so initials
-        obj.initials = collector.slice(0, collector.indexOf(' '))
-        obj.lastName = collector.slice(collector.indexOf(' ') + 1)
+      if(/^[A-Z\.\s]+\s/.test(collector)) { //capitals followed by a space, so initials
+        obj.initials = collector.match(/^([A-Z\.\s])+\s/)[0]
+        obj.lastName = collector.replace(obj.initials, '').trim()
+        obj.initials = obj.initials.replace(/\s+/g, '') //clean them up
         return obj
       }
       else {
         //it might end with initials
-        if(/\s+[A-Z\.]+$/.test(collector)) { //it ends with initials
-          let parts = collector.split(/\s+/)
-          obj.initials = parts.pop()
-          obj.lastName = parts.join(' ')
+        if(/\s+[A-Z\.\s]+$/.test(collector)) {
+          obj.initials = collector.match(/\s+([A-Z\.\s])+$/)[0]
+          obj.lastName = collector.replace(obj.initials, '').trim()
+          obj.initials = obj.initials.replace(/\s+/g, '') //clean them up
           return obj
         }
         else if (specialSurnames.includes(collector.slice(0, collector.indexOf(' ')).toLowerCase())){ //catch the van, de, etc surnames
