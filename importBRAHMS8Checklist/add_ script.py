@@ -1,4 +1,4 @@
-# Takes a taxon checklist exported from BRAHMS 8 and imports to Specify taxon table. 
+# Takes a taxon checklist exported from BRAHMS 8 and imports to the Specify taxon table. 
 # Note this will check if each taxon is already in the tree using the wfo-id or the full name-author combination
 # and only create new new taxa where necessary. 
 # The imported dataset needs to be prepared first so that all taxon fields come one after the other. 
